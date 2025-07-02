@@ -1,0 +1,12 @@
+site_name: arkIQ Documentation
+site_description: Documentation for arkIQ IoT data management and alerting. 
+theme:
+  name: material
+
+nav:
+  - Home: index.md
+  - Architecture: architecture.md
+  - Services:
+      - Auth Service: services/auth.md
+      - IoT Data Service: services/iot-data.md
+      - Alerting Service: services/alerting.md
