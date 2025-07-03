@@ -403,30 +403,6 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Receiving Data on AWS">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#4a-alerts" class="md-nav__link">
-    <span class="md-ellipsis">
-      4A. Alerts
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4b-database-storage" class="md-nav__link">
-    <span class="md-ellipsis">
-      4B. Database Storage
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
         
           <li class="md-nav__item">
@@ -675,30 +651,6 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Receiving Data on AWS">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#4a-alerts" class="md-nav__link">
-    <span class="md-ellipsis">
-      4A. Alerts
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4b-database-storage" class="md-nav__link">
-    <span class="md-ellipsis">
-      4B. Database Storage
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
         
           <li class="md-nav__item">
@@ -770,11 +722,15 @@
 <li>
 <p>Each queue triggers a <strong>separate Lambda function</strong>, which processes the received data and follows a distinct path depending on the device.</p>
 </li>
+<li>
+<p>Alerts<br />
+If necessary, alerts are sent via <strong>email</strong> and <strong>SMS</strong>.</p>
+</li>
+<li>
+<p>Database Storage<br />
+Processed data is stored in the <strong>database</strong>.</p>
+</li>
 </ol>
-<h4 id="4a-alerts">4A. Alerts</h4>
-<p>If necessary, alerts are sent via <strong>email</strong> and <strong>SMS</strong>.</p>
-<h4 id="4b-database-storage">4B. Database Storage</h4>
-<p>Processed data is stored in the <strong>database</strong>.</p>
 <hr />
 <h3 id="lambda-functions">Lambda Functions</h3>
 <p>The Lambda functions are the <strong>core</strong> of the system.<br />
