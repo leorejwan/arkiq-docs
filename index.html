@@ -604,9 +604,415 @@ docs/
 <h2 id="data-transmission">Data Transmission</h2>
 <p>The Things Stack stores only a limited number of device uplinks.</p>
 <p>Therefore, devices send uplinks directly to <strong>AWS</strong> using a private key.</p>
-<p>Example:</p>
-<p>```plaintext
-// Add your example payload or message structure here</p>
+<p><a href="https://www.thethingsindustries.com/docs/integrations/cloud-integrations/aws-iot/">TTN AWS Integration Guide</a></p>
+<h2 id="aws-data-flow-integration">AWS Data Flow Integration</h2>
+<p>Each application must be configured individually to transmit data to AWS.</p>
+<h3 id="receiving-data-on-aws">Receiving Data on AWS</h3>
+<p><img alt="TTN AWS Integration Diagram" src="https://arkiq-open-images.s3.us-east-1.amazonaws.com/ttn+aws+integration+diagram.png" /></p>
+<ol>
+<li>
+<p><strong>Uplink sent from TTN to AWS</strong></p>
+</li>
+<li>
+<p><strong>AWS IoT Core</strong> receives the uplinks.<br />
+   A separate <strong>IoT Core Rule</strong> is defined for each device type, extracting the necessary information from each uplink.</p>
+</li>
+<li>
+<p>The extracted data is sent to a <strong>dedicated queue</strong> for each device type.</p>
+</li>
+<li>
+<p>Each queue triggers a <strong>separate Lambda function</strong>, which processes the received data and follows a distinct path depending on the device.</p>
+</li>
+</ol>
+<h4 id="4a-alerts">4A. Alerts</h4>
+<p>If necessary, alerts are sent via <strong>email</strong> and <strong>SMS</strong>.</p>
+<h4 id="4b-database-storage">4B. Database Storage</h4>
+<p>Processed data is stored in the <strong>database</strong>.</p>
+<hr />
+<h3 id="lambda-functions">Lambda Functions</h3>
+<p>The Lambda functions are the <strong>core</strong> of the system.<br />
+They handle all calculations and business logic decisions.</p>
+<h1 id="lambda-function-process_browan_water_leak">Lambda Function: <code>Process_browan_water_leak</code></h1>
+<h2 id="purpose">Purpose</h2>
+<p>Only for Water Leak Devices from Manufacture Browan.</p>
+<h2 id="main-operations-and-algorithms">Main Operations and Algorithms:</h2>
+<ul>
+<li>
+<p>Temperature: from Celcius to Fahrenheit</p>
+</li>
+<li>
+<p>Saves all connected gateways in a list and saves it in the database.</p>
+</li>
+<li>
+<p>If it is sidewalk, saves “NN” instead of gateways.</p>
+</li>
+<li>
+<p>Saves data in the browan_water_leak_data table and updates the latest data in the devices_last_data table.</p>
+</li>
+</ul>
+<p>Note: Alerts are not sent by this Lambda. This Lambda sends data to another Lambda (SendAlertNotification) and that one will decide whether to send an alert.</p>
+<hr />
+<h2 id="input-source">Input Source</h2>
+<p>Receives messages from the following SQS queue:<br />
+<strong><code>BrowanWaterLeakUplinkQueue</code></strong></p>
+<h2 id="output-destinations">Output Destinations</h2>
+<ul>
+<li>Sends data to Lambda: <strong><code>SendAlertNotification</code></strong></li>
+<li>Stores data in the following tables:</li>
+<li><code>devices_details</code></li>
+<li><code>browan_water_leak_data</code></li>
+<li><code>devices_last_data</code></li>
+</ul>
+<hr />
+<h2 id="input-format-json">Input Format (JSON)</h2>
+<pre><code class="language-json">{
+    &quot;device_id&quot;: &quot;WL1&quot;,
+    &quot;application_id&quot;: &quot;12&quot;,
+    &quot;dev_eui&quot;: &quot;0123&quot;,
+    &quot;read_time&quot;: &quot;2025-07-02T18:40:24.038707017Z&quot;,
+    &quot;battery&quot;: 2.6,
+    &quot;humidity&quot;: 58,
+    &quot;water_leak&quot;: 1,
+    &quot;temperature&quot;: 22.1,
+    &quot;button_pressed&quot;: 0,
+    &quot;tamper&quot;: 0,
+    &quot;f_cnt&quot;: 2069,
+    &quot;metadata&quot;: [
+        {
+            &quot;gateway_ids&quot;: {
+                &quot;gateway_id&quot;: &quot;gid&quot;,
+                &quot;eui&quot;: &quot;1234&quot;
+            },
+            &quot;time&quot;: &quot;2025-07-02T18:40:24.038707017Z&quot;,
+            &quot;timestamp&quot;: 2136602948,
+            &quot;rssi&quot;: -112,
+            &quot;channel_rssi&quot;: -112,
+            &quot;snr&quot;: 1,
+            &quot;uplink_token&quot;: &quot;abcd=&quot;,
+            &quot;received_at&quot;: &quot;2025-07-02T18:40:23.906695800Z&quot;
+        }
+    ]
+}
+</code></pre>
+<h1 id="lambda-function-process_senospace">Lambda Function: <code>Process_senospace</code></h1>
+<h2 id="purpose_1">Purpose</h2>
+<p>Only for Water Leak Devices from Manufacture Senospace. Doesn't include Toilet Sensors</p>
+<h2 id="main-operations-and-algorithms_1">Main Operations and Algorithms:</h2>
+<ul>
+<li>
+<p>Temperature: from Celcius to Fahrenheit</p>
+</li>
+<li>
+<p>Saves all connected gateways in a list and saves it in the database.</p>
+</li>
+<li>
+<p>Saves data in the browan_water_leak_data table and updates the latest data in the devices_last_data table.</p>
+</li>
+</ul>
+<p>Note: Alerts are not sent by this Lambda. This Lambda sends data to another Lambda (SendAlertNotification) and that one will decide whether to send an alert.</p>
+<hr />
+<h2 id="input-source_1">Input Source</h2>
+<p>Receives messages from the following SQS queue:<br />
+<strong><code>senospace_uplink_queue</code></strong></p>
+<h2 id="output-destinations_1">Output Destinations</h2>
+<ul>
+<li>Sends data to Lambda: <strong><code>SendAlertNotification</code></strong></li>
+<li>Stores data in the following tables:</li>
+<li><code>devices_details</code></li>
+<li><code>senospace_data</code></li>
+<li><code>devices_last_data</code></li>
+</ul>
+<hr />
+<h2 id="input-format-json_1">Input Format (JSON)</h2>
+<pre><code class="language-json">{
+    &quot;device_id&quot;: &quot;123&quot;,
+    &quot;application_id&quot;: &quot;app1&quot;,
+    &quot;dev_eui&quot;: &quot;1234&quot;,
+    &quot;read_time&quot;: &quot;2025-07-02T19:16:38.982846975Z&quot;,
+    &quot;payload_type&quot;: &quot;Heartbeat&quot;,
+    &quot;payload_type_id&quot;: 1,
+    &quot;battery_percentage&quot;: 38,
+    &quot;battery_voltage&quot;: 3.16,
+    &quot;external_leak_detection_enabled&quot;: true,
+    &quot;pin_leak_detection_enabled&quot;: true,
+    &quot;tamper_detection_enabled&quot;: true,
+    &quot;humidity&quot;: 54.2,
+    &quot;last_rssi&quot;: -42,
+    &quot;last_snr&quot;: 13,
+    &quot;external_leak_detected&quot;: false,
+    &quot;jack_detected&quot;: false,
+    &quot;magnet_detected&quot;: false,
+    &quot;pin_leak_detected&quot;: false,
+    &quot;power_detected&quot;: false,
+    &quot;state_as_uint8&quot;: 7,
+    &quot;temperature&quot;: 24.33,
+    &quot;frame_count&quot;: 2677,
+    &quot;metadata&quot;: [
+        {
+            &quot;gateway_ids&quot;: {
+                &quot;gateway_id&quot;: &quot;eui-58a0cbfffe8040c1&quot;,
+                &quot;eui&quot;: &quot;58A0CBFFFE8040C1&quot;
+            },
+            &quot;time&quot;: &quot;2025-07-02T19:16:38.982846975Z&quot;,
+            &quot;timestamp&quot;: 2143403483,
+            &quot;rssi&quot;: -63,
+            &quot;channel_rssi&quot;: -63,
+            &quot;snr&quot;: 9.25,
+            &quot;uplink_token&quot;: &quot;CiIKIAoUZXVpLTU4YTBjYmZmZmU4MDQwYzESCFigy//+gEDBENv7hv4HGgwIl4uWwwYQyZ28jAEg+L625rA+&quot;,
+            &quot;received_at&quot;: &quot;2025-07-02T19:16:39.241239981Z&quot;
+        },
+        {
+            &quot;gateway_ids&quot;: {
+                &quot;gateway_id&quot;: &quot;iqgw-tk-20&quot;,
+                &quot;eui&quot;: &quot;647FDAFFFE01F36D&quot;
+            },
+            &quot;timestamp&quot;: 1245444315,
+            &quot;rssi&quot;: -78,
+            &quot;channel_rssi&quot;: -78,
+            &quot;snr&quot;: 9.5,
+            &quot;uplink_token&quot;: &quot;ChgKFgoKaXFndy10ay0yMBIIZH/a//4B820Q2/Hv0QQaDAiXi5bDBhCLqciXASD4rpDSn+UU&quot;,
+            &quot;received_at&quot;: &quot;2025-07-02T19:16:39.125916168Z&quot;
+        }
+    ]
+}
+</code></pre>
+<h1 id="lambda-function-process_long_flush_senospace">Lambda Function: <code>Process_long_flush_senospace</code></h1>
+<h2 id="purpose_2">Purpose</h2>
+<p>Only for Toilet Sensor Devices from Manufacture Senospace filtered by the uplinks of type LONG_FLUSH (payload_type_id = 10).</p>
+<h2 id="main-operations-and-algorithms_2">Main Operations and Algorithms:</h2>
+<h3 id="how-does-long-flush-work">How Does Long Flush Work?</h3>
+<p>The device only sends the uplink <strong>after 3 minutes (default)</strong> of continuous flushing.<br />
+In other words, when the uplink is received, the flushing has already been occurring for 3 minutes.<br />
+Because of that, the Lambda must register that the flush <strong>started 3 minutes earlier</strong>.</p>
+<hr />
+<h3 id="end-of-flush">End of Flush</h3>
+<p>When a flush ends, a different type of uplink is sent:<br />
+<strong>Last Event Water Usage</strong> (<code>payload_type_id = 11</code>).<br />
+However, this uplink is processed by <strong>another Lambda</strong>:<br />
+<code>Process_water_usage_senospace</code>.</p>
+<hr />
+<h3 id="custom-long-flush-duration">Custom Long Flush Duration</h3>
+<p>The user can request the device to register a flush <strong>only after 4 or more minutes</strong>. In this case:</p>
+<ol>
+<li>An external API (not the Lambda) stores on the device the setting that long flush should be recorded after 4+ minutes.</li>
+<li>The Lambda checks the device settings in the database.</li>
+<li>Based on the setting:</li>
+<li><strong>If it's set to 3 minutes (default):</strong><br />
+     The long flush is recorded normally.</li>
+<li><strong>If it's set to more than 3 minutes (late long flush):</strong>  <ul>
+<li>The long flush is saved to the database.  </li>
+<li>The property <code>long_event_hide_on_dashboard</code> is set to <code>False</code>, so it <strong>won't appear on the Dashboard</strong>.  </li>
+<li>A <strong>schedule is created in EventBridge</strong> to trigger the long flush later via the <code>LateLongFlush</code> Lambda.</li>
+</ul>
+</li>
+</ol>
+<hr />
+<h3 id="notes">Notes</h3>
+<ul>
+<li>
+<p>There is <strong>no information</strong> about gallons used in the flush in this uplink.<br />
+  This data will arrive in a separate uplink of type <strong>Last Event Water Usage</strong> (<code>payload_type_id = 11</code>).</p>
+</li>
+<li>
+<p>The device is renamed with a <code>-flow</code> suffix to distinguish Toilet Sensor data from Leak Sensor data,<br />
+  since <strong>Senospace includes both sensor types</strong> in the same transmitter.</p>
+</li>
+</ul>
+<hr />
+<h2 id="input-source_2">Input Source</h2>
+<p>Receives messages from the following SQS queue:<br />
+<strong><code>long_flush_senospace_uplink_queue</code></strong></p>
+<h2 id="output-destinations_2">Output Destinations</h2>
+<ul>
+<li>Sends data to Lambda: <strong><code>SendAlertToiletNotification</code></strong>, <strong><code>LateLongFlush</code></strong></li>
+<li>Stores data in the following tables:</li>
+<li><code>devices_details</code></li>
+<li><code>senospace_alerts_data</code></li>
+<li><code>devices_last_data</code></li>
+</ul>
+<hr />
+<h2 id="input-format-json_2">Input Format (JSON)</h2>
+<pre><code class="language-json">{
+    &quot;device_id&quot;: &quot;123&quot;,
+    &quot;application_id&quot;: &quot;app2&quot;,
+    &quot;dev_eui&quot;: &quot;1234&quot;,
+    &quot;read_time&quot;: &quot;2025-07-02T19:11:57.283046007Z&quot;,
+    &quot;payload_type&quot;: &quot;Alert&quot;,
+    &quot;payload_type_id&quot;: 10,
+    &quot;alert_type&quot;: &quot;Pulse Counting (Long Event Alert)&quot;,
+    &quot;current_status&quot;: 1,
+    &quot;pulse_duration_trigger&quot;: 180000,
+    &quot;frame_count&quot;: 3642
+}
+</code></pre>
+<h1 id="lambda-function-process_water_usage_senospace">Lambda Function: <code>Process_water_usage_senospace</code></h1>
+<h2 id="purpose_3">Purpose</h2>
+<p>Only for Toilet Sensor Devices from Manufacture Senospace filtered by the uplinks of type WATER_USAGE (payload_type_id = 11).</p>
+<h2 id="main-operations-and-algorithms_3">Main Operations and Algorithms:</h2>
+<h3 id="how-does-water-usage-work">How Does Water Usage Work?</h3>
+<p>Gallons_spent = Pulse_total_pulses * 0.264172</p>
+<p>Water usage can occur after a normal flush or after a Long Flush.</p>
+<p>If it is after a normal flush, then it simply records in the database that a flush occurred without needing to calculate when the flush started. However, there can be two types:</p>
+<ul>
+<li>Above 1 gallon: <strong>"normal flush"</strong></li>
+<li>Equal to or less than 1 gallon: <strong>"escape"</strong> (value too low to be a real flush)</li>
+</ul>
+<p>If it is after a Long Flush, then:</p>
+<ul>
+<li>If the Long Flush has already been registered, then this Water Usage must be recorded at the moment the Long Flush started. The type of this flush must be <strong>"long"</strong>.</li>
+<li>If the Long Flush has not yet been registered on the dashboard [see late long flush], then the Long Flush should not appear on the dashboard. Instead, it should appear as a normal flush, without the need to calculate when the flush started.</li>
+</ul>
+<hr />
+<h2 id="input-source_3">Input Source</h2>
+<p>Receives messages from the following SQS queue:<br />
+<strong><code>water_usage_senospace_uplink_queue</code></strong></p>
+<h2 id="output-destinations_3">Output Destinations</h2>
+<ul>
+<li>Sends data to Lambda: <strong><code>SendAlertToiletNotification</code></strong></li>
+<li>Stores data in the following tables:</li>
+<li><code>devices_details</code></li>
+<li><code>senospace_alerts_data</code></li>
+<li><code>devices_last_data</code></li>
+</ul>
+<hr />
+<h2 id="input-format-json_3">Input Format (JSON)</h2>
+<pre><code class="language-json">{
+    &quot;device_id&quot;: &quot;123&quot;,
+    &quot;application_id&quot;: &quot;app1&quot;,
+    &quot;dev_eui&quot;: &quot;1234&quot;,
+    &quot;read_time&quot;: &quot;2025-07-02T20:13:31.984311103Z&quot;,
+    &quot;payload_type&quot;: &quot;Alert&quot;,
+    &quot;payload_type_id&quot;: 11,
+    &quot;alert_type&quot;: &quot;Pulse Counting Event (Last Event Usage)&quot;,
+    &quot;humidity&quot;: 54.33,
+    &quot;temperature&quot;: 23.64,
+    &quot;pulse_device_type_id&quot;: 1,
+    &quot;pulse_total_pulses&quot;: 2902,
+    &quot;pulse_total_liters&quot;: 2.694521819870009,
+    &quot;frame_count&quot;: 24465
+}
+</code></pre>
+<h1 id="lambda-function-process_toilet_heartbeat_senospace">Lambda Function: <code>Process_toilet_heartbeat_senospace</code></h1>
+<h2 id="purpose_4">Purpose</h2>
+<p>Only for Toilet Sensor Devices from Manufacture Senospace filtered by the uplinks of type HEARTBEAT (payload_type_id = 9).</p>
+<h2 id="main-operations-and-algorithms_4">Main Operations and Algorithms:</h2>
+<h3 id="how-does-the-heartbeat-work">How Does the Heartbeat Work?</h3>
+<p>The heartbeat shows what has occurred since the last heartbeat:</p>
+<ul>
+<li>Number of flushes  </li>
+<li>Gallons spent  </li>
+</ul>
+<hr />
+<p><strong>Note:</strong><br />
+If a long flush is currently happening and has not yet finished, and a heartbeat is sent,<br />
+then the gallons spent during this ongoing long flush are <strong>pre-calculated</strong>.</p>
+<hr />
+<h2 id="input-source_4">Input Source</h2>
+<p>Receives messages from the following SQS queue:<br />
+<strong><code>BrowanWaterLeakUplinkQueue</code></strong></p>
+<h2 id="output-destinations_4">Output Destinations</h2>
+<ul>
+<li>Sends data to Lambda: <strong><code>toilet_heartbeat_senospace_uplink_queue</code></strong></li>
+<li>Stores data in the following tables:</li>
+<li><code>devices_details</code></li>
+<li><code>senospace_alerts_data</code></li>
+<li><code>devices_last_data</code></li>
+</ul>
+<hr />
+<h2 id="input-format-json_4">Input Format (JSON)</h2>
+<pre><code class="language-json">{
+    &quot;device_id&quot;: &quot;123&quot;,
+    &quot;application_id&quot;: &quot;app1&quot;,
+    &quot;dev_eui&quot;: &quot;1234&quot;,
+    &quot;read_time&quot;: &quot;2025-07-02T20:18:57.869425058Z&quot;,
+    &quot;payload_type&quot;: &quot;Alert&quot;,
+    &quot;payload_type_id&quot;: 9,
+    &quot;alert_type&quot;: &quot;Pulse Counting (Total Events)&quot;,
+    &quot;pulse_long_event_triggered&quot;: 0,
+    &quot;pulse_alert_interval&quot;: 500,
+    &quot;pulse_device_type_id&quot;: 1,
+    &quot;pulse_total_events&quot;: 11,
+    &quot;pulse_total_pulses&quot;: 11,
+    &quot;pulse_total_liters&quot;: 0.01021355617455896,
+    &quot;frame_count&quot;: 325
+}
+</code></pre>
+<h1 id="lambda-function-process_alerts_senospace">Lambda Function: <code>Process_alerts_senospace</code></h1>
+<h2 id="purpose_5">Purpose</h2>
+<p>Only for Leak Sensor and Toilet Sensor Devices from Manufacture Senospace filtered by the uplinks of payload_type_id = 1,2,3,4,5,6,7,8 and 12.</p>
+<h2 id="main-operations-and-algorithms_5">Main Operations and Algorithms:</h2>
+<h3 id="processing-based-on-payload_type_id">Processing Based on <code>payload_type_id</code></h3>
+<p>Depending on the <code>payload_type_id</code>, the processing is different:</p>
+<ul>
+<li>
+<p><strong>payload_type_id = 1</strong> → Leak Detected External (LEAK SENSOR)<br />
+  Saves the event and calls the Lambda <strong>SendAlertNotification</strong> to send an alert.</p>
+</li>
+<li>
+<p><strong>payload_type_id = 2</strong> → Leak Detected Local (LEAK SENSOR)<br />
+  Saves the event and calls the Lambda <strong>SendAlertNotification</strong> to send an alert.</p>
+</li>
+<li>
+<p><strong>payload_type_id = 3</strong> → Tamper (LEAK SENSOR)<br />
+  Saves the event. This uplink is sent when the device comes into contact with the magnet (not actual movement).</p>
+</li>
+<li>
+<p><strong>payload_type_id = 4</strong> → Button Pressed (LEAK SENSOR)<br />
+  Saves the event.</p>
+</li>
+<li>
+<p><strong>payload_type_id = 5</strong> → High Temperature (LEAK SENSOR)<br />
+  Saves the event and calls the Lambda <strong>SendAlertNotification</strong> to send an alert.</p>
+</li>
+<li>
+<p><strong>payload_type_id = 6</strong> → Low Temperature (LEAK SENSOR)<br />
+  Saves the event and calls the Lambda <strong>SendAlertNotification</strong> to send an alert.</p>
+</li>
+<li>
+<p><strong>payload_type_id = 7</strong> → High Humidity (LEAK SENSOR)<br />
+  Saves the event and calls the Lambda <strong>SendAlertNotification</strong> to send an alert.</p>
+</li>
+<li>
+<p><strong>payload_type_id = 8</strong> → Low Humidity (LEAK SENSOR)<br />
+  Saves the event and calls the Lambda <strong>SendAlertNotification</strong> to send an alert.</p>
+</li>
+<li>
+<p><strong>payload_type_id = 12</strong> → Headphone Jack Alert (LEAK SENSOR)<br />
+  Saves the event.</p>
+</li>
+</ul>
+<hr />
+<h2 id="input-source_5">Input Source</h2>
+<p>Receives messages from the following SQS queue:<br />
+<strong><code>alerts_senospace_uplink_queue</code></strong></p>
+<h2 id="output-destinations_5">Output Destinations</h2>
+<ul>
+<li>Sends data to Lambda: <strong><code>SendAlertNotification</code></strong>, <strong><code>SendAlertToiletNotification</code></strong></li>
+<li>Stores data in the following tables:</li>
+<li><code>devices_details</code></li>
+<li><code>senospace_data</code></li>
+<li><code>senospace_alerts_data</code></li>
+<li><code>devices_last_data</code></li>
+</ul>
+<hr />
+<h2 id="input-format-json-example-only-for-payload_type_id-2">Input Format (JSON) - example only for payload_type_id = 2</h2>
+<pre><code class="language-json">{
+    &quot;device_id&quot;: &quot;123&quot;,
+    &quot;application_id&quot;: &quot;app4&quot;,
+    &quot;dev_eui&quot;: &quot;1234&quot;,
+    &quot;read_time&quot;: &quot;2025-07-02T18:46:19.129642963Z&quot;,
+    &quot;payload_type&quot;: &quot;Alert&quot;,
+    &quot;payload_type_id&quot;: 2,
+    &quot;alert_type&quot;: &quot;Local Leak Detection (Via Bottom Contact Pins)&quot;,
+    &quot;current_status&quot;: 0,
+    &quot;current_value&quot;: 3044,
+    &quot;humidity&quot;: 49.23,
+    &quot;temperature&quot;: 23.68,
+    &quot;delay_count&quot;: 1,
+    &quot;trigger_value&quot;: 5000,
+    &quot;frame_count&quot;: 2789
+}
+</code></pre>
 
 
 
