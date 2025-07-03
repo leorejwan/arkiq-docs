@@ -574,8 +574,8 @@
 <h2 id="commands">Commands</h2>
 <ul>
 <li><code>mkdocs new [dir-name]</code> - Create a new project.</li>
-<li><code>mkdocs serve</code> - Start the live-reloading docs server.</li>
-<li><code>mkdocs build</code> - Build the documentation site.</li>
+<li><code>mkdocs serve</code> - Start the live- docs server.</li>
+<li><code>mkdocs build</code> - Build the documreloadingentation site.</li>
 <li><code>mkdocs -h</code> - Print help message and exit.</li>
 </ul>
 <h2 id="project-layout">Project layout</h2>
@@ -584,6 +584,29 @@ docs/
     index.md  # The documentation homepage.
     ...       # Other markdown pages, images and other files.
 </code></pre>
+<h1 id="arkiq-system-documentation">arkIQ System Documentation</h1>
+<p>All arkIQ's LoRaWAN devices are currently on <strong>The Things Stack</strong>.</p>
+<p><strong>Server:</strong><br />
+<a href="https://smarttechsolutions.nam1.cloud.thethings.industries">https://smarttechsolutions.nam1.cloud.thethings.industries</a></p>
+<h2 id="device-types-on-ttn">Device Types on TTN</h2>
+<ul>
+<li>Leak Sensors  </li>
+<li>Toilet Sensors  </li>
+<li>Smart Valves  </li>
+<li>Smart Metering  </li>
+<li>Gas Sensor  </li>
+</ul>
+<h2 id="applications-on-ttn">Applications on TTN</h2>
+<p>TTN applications are defined according to the types of devices.</p>
+<h3 id="decoders">Decoders</h3>
+<p>Each application's decoder depends on the <strong>device type</strong> and <strong>manufacturer</strong>:</p>
+<p>👉 <a href="https://drive.google.com/drive/folders/15QW0Hz2vR1NtYk9xTZh_HomaRUD1GTcr">Decoder Repository on Google Drive</a></p>
+<h2 id="data-transmission">Data Transmission</h2>
+<p>The Things Stack stores only a limited number of device uplinks.</p>
+<p>Therefore, devices send uplinks directly to <strong>AWS</strong> using a private key.</p>
+<p>Example:</p>
+<p>```plaintext
+// Add your example payload or message structure here</p>
 
 
 
