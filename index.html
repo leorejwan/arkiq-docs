@@ -441,6 +441,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#lambdas-for-example" class="md-nav__link">
     <span class="md-ellipsis">
       Lambdas for example
@@ -734,6 +743,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#lambdas-for-example" class="md-nav__link">
     <span class="md-ellipsis">
       Lambdas for example
@@ -802,7 +820,7 @@ Processed data is stored in the <strong>database</strong>.</p>
 <h3 id="from-now-on-september-2025-the-new-devices-should-be-onboarded-on-aws-iot-core">From now on (September, 2025) the new devices should be onboarded on AWS IoT Core</h3>
 <hr />
 <h3 id="device-types">Device Types:</h3>
-<p>ArkIQ has different types of devices</p>
+<p>arkIQ has different types of devices</p>
 <p>1- IQWL: Leak Sensor
 2- IQSL: Leak Sensor + Toilet Sensor
 3- IQWM: Water Meter
@@ -813,7 +831,8 @@ Water Leak Detected: boolean
 Tamper Detected: boolean
 Button Pressed: boolean
 Temperature (Celsius): decimal
-Humidity (%): decimal</p>
+Humidity (%): decimal
+Battery (V): decimal</p>
 <p>Payload:</p>
 <p>Bytes:
 00 08 d2 00 3e</p>
@@ -947,19 +966,33 @@ function decodeUplink(input) {
 }
 </code></pre>
 <h3 id="iqsl">IQSL</h3>
-<p>This device has two parts: the leak sensor, that it's also a transmitter. If connected to a jack, it can extend the Leak detection probs, or can also receive information from the <em>Toilet Sensor</em></p>
-<p><em>By default at arkIQ, all IQSL is connected to a Toilet Sensor</em></p>
-<p><em>1- Heartbeat Packet (fPort = 0x01)</em>
+<p>This device is in the same time a <strong>Leak Sensor</strong> and a <strong>Transmitter</strong>: </p>
+<ol>
+<li>
+<p>Leak Sensor: detects leak using its probs (Similar to IQWL devices).</p>
+</li>
+<li>
+<p>Transmitter: it's possible to connect a headphone jack wth two functionalities:</p>
+</li>
+<li>
+<p>Extends Leak Sensor capacity. Another device can be connected to the IQSL that detects Water Leaks. So, using the Headphone Jack, the other device will let the IQSL know that there is an external Leak. <strong>Attribute externalLeakDetectionEnabled = TRUE to extend the Leak Detection to the headphone jack. Attribute externalLeakDetected = TRUE if the extensor detects leak.</strong></p>
+</li>
+<li>
+<p>Connect a Toilet Sensor. The Toilet Sensor is a device that can be connected directly on a Toilet Pipe and it will give information about flushes and water usage. It can be connected using the Headphone Jack and will send toilet information to the transmitter. <strong>attribute externalLeakDetected = FALSE to make Toilet Sensor works.</strong> </p>
+</li>
+</ol>
+<p><strong>The platform need to show if the IQSL is connected to a Leak Sensor, or to a Toilet Sensor, or if there's no headphone jack connected</strong></p>
+<p><strong>1- Heartbeat Packet (fPort = 0x01)</strong>
 Attributes:
 Battery Voltage (V)
 batteryPercentage (%)
 Temperature (Celsius)
 Humidity (%)
 pinLeakDetectionEnabled: boolean (default: true)
-externalLeakDetectionEnabled: boolean (default: false in order to work the Toilet Sensor)
+externalLeakDetectionEnabled: boolean (TRUE to work the Leak Sensor extensor. FALSE to work the Toilet Sensor)
 tamperDetectionEnabled: boolean
 pinLeakDetected: boolean (if it's occuring a leak right now)
-externalLeakDetected: boolean (always false)
+externalLeakDetected: boolean (if Toilet Sensor connected, then always FALSE)
 powerDetected: boolean (No idea what is this)
 jackDetected: boolean (True, if connected to a Toilet Sensor)
 magnetDetected: boolean (Tamper detection using a magnet)</p>
@@ -998,10 +1031,10 @@ AbBkCNYUcgv/tAU=</p>
         &quot;payloadType&quot;: &quot;Heartbeat&quot;,
         &quot;payloadTypeId&quot;: 1
 </code></pre>
-<p><em>2- Alert Packets (fPort = 0x02)</em>
+<p><strong>2- Alert Packets (fPort = 0x02)</strong>
 Triggered when a specific event occurs.
 The first byte (bytes[0]) defines the alert type:</p>
-<p>Case 1: External Leak (via headphone jack) - not applied, because the Toilet Sensor will be connected to the Jack, not a Leak Sensor Extensor.
+<p>Case 1: External Leak (via headphone jack) - not applied, because the Toilet Sensor will be connected to the headphone Jack, not a Leak Sensor Extensor.
 Attributes:
 triggerValue: (No idea what is it)
 currentValue: int (how moisture is it. Can define the level to consider it a leak detected)
@@ -1010,7 +1043,7 @@ humidity
 delayCount (No idea what is it)
 currentState: boolean (true = leak detected. false = leak cleared) </p>
 <p>(IMPORTANT)
-Case 2: Local Leak (via bottom contact pins) <em>Only activate if the attribute pinLeakDetectionEnabled = true</em>
+Case 2: Local Leak (via bottom contact pins) <strong>Only activate if the attribute pinLeakDetectionEnabled = true</strong>
 Attributes:
 triggerValue: (No idea what is it)
 currentValue: int (how moisture is it. Can define the level to consider it a leak detected)
@@ -1018,7 +1051,7 @@ temperature
 humidity 
 delayCount (No idea what is it)
 currentState: boolean (true = leak detected. false = leak cleared) </p>
-<p>Case 3: Tamper (magnet detected) - Activate when the magnet touch the device, simulating a tamper. <em>Only activate if the attribute tamperDetectionEnabled = true</em></p>
+<p>Case 3: Tamper (magnet detected) - Activate when the magnet touch the device, simulating a tamper. <strong>Only activate if the attribute tamperDetectionEnabled = true</strong></p>
 <p>Case 4: Push button pressed - Activated when button is pressed</p>
 <p>Case 5: Temperature High. Defined by downlink th hreshold
 Case 6: Temperature Low.
@@ -1026,13 +1059,13 @@ Case 7: Humidity High.
 Case 8: Humidity Low.
   From 5 to 8: Each includes current value, trigger threshold, guardband (safety margin), delay, and state.</p>
 <p>(IMPORTANT)
-Case 9: Total Events (cumulative counter): <em>Toilet Sensor Heartbeat</em>
+Case 9: Total Events (cumulative counter): <strong>Toilet Sensor Heartbeat</strong>
 Attributes:
 longEventTriggered: boolean (is it occuring a Long Flush right now? True = yes. False = No)
 alertInterval (no Idea what is it)
 deviceTypeId (no Idea what is it)
 totalEvents: int (How many flushes occured since the last heartbeat)
-totalLiters: decimal (How many litters were spent since the last heartbeat) -&gt; <em>Convert to Gallons (litters * 0.264172)</em>
+totalLiters: decimal (How many litters were spent since the last heartbeat) -&gt; <strong>Convert to Gallons (litters ** 0.264172)</strong>
 totalPulses: decimal (How many pulses were spent since the last heartbeat)</p>
 <p>Payload:</p>
 <p>Bytes:
@@ -1057,7 +1090,7 @@ CQAAFmEAAQEAAAU=</p>
       }
 </code></pre>
 <p>(IMPORTANT)
-Case 10: Long Event Alert (long-duration events): <em>Toilet Sensor Long Event detected</em></p>
+Case 10: Long Event Alert (long-duration events): <strong>Toilet Sensor Long Event detected</strong></p>
 <p>Attriubtes:
 currentState: boolean (True = started. False: Ended)
 durationTrigger: int (How many time flushing is consider a Long Flush and it will trigger this payload - in milliseconds)</p>
@@ -1079,9 +1112,9 @@ durationTrigger: int (How many time flushing is consider a Long Flush and it wil
       }
 </code></pre>
 <p>(IMPORTANT)
-Case 11: Last Event Usage (usage of the last event): <em>Toilet Sensor water usage when a flush (normal or long) ends</em></p>
+Case 11: Last Event Usage (usage of the last event): <strong>Toilet Sensor water usage when a flush (normal or long) ends</strong></p>
 <p>Attriubtes:
-totalLiters: decimal (how many litters was spent in the last flush)  -&gt; <em>Convert to Gallons (litters * 0.264172)</em>
+totalLiters: decimal (how many litters was spent in the last flush)  -&gt; <strong>Convert to Gallons (litters x 0.264172)</strong>
 totalPulses: decimal (how many pulses was spent in the last flush)
 humidity (%)
 temperature (Celsius)</p>
@@ -1089,7 +1122,7 @@ temperature (Celsius)</p>
 - If this flush was a normal flush, we don't know how much time this flush was running. However, we know by this payload when it finished.
 - If this flush was a long flush, we know when it started, because the Long Flush payload (type: 10) was triggered before this payload of Last Event Usage (type: 11).
 - One challenge is to assign the Last Event Usage payload (type: 11) with the Long Flush payload (type: 10), because the payloads will be triggered in different moments. Also, the Last Event Usage payload doesn't indicate if the last event usage was long or a normal flush.
-- If the last flush spent less then 1 gallon. So this is consider a <em>Scape</em>, not a normal flush </p>
+- If the last flush spent less then 1 gallon. So this is consider a <strong>Scape</strong>, not a normal flush </p>
 <p>Payload:</p>
 <p>Bytes:
 0B00001CCC01088115FF</p>
@@ -1118,14 +1151,14 @@ jackConnected: Boolean (true: yes. false: no)</p>
 <p>Payload:</p>
 <h2 id="bytes_1">Bytes:</h2>
 <h2 id="criptographic_1">Criptographic:</h2>
-<p><em>3- System Packets (fPort = 0x03)</em>
+<p><strong>3- System Packets (fPort = 0x03)</strong>
 Maintenance/system packets.</p>
 <p>Case 0x01: Network Test Packet → reports SNR and RSSI.</p>
 <p>Case 0x02: Joined Uplink Packet → confirms joining the network and sends configs:</p>
 <p>firmwareVersion, heartbeatInterval, sensorCheckInterval.</p>
 <p>Which alerts are enabled (bitmasks in bytes[7] and bytes[8]).</p>
 <p>Used for network testing and initial configuration after join.</p>
-<p><em>4- Parameter Values (fPort = 0x04)</em></p>
+<p><strong>4- Parameter Values (fPort = 0x04)</strong></p>
 <p>Here we have many subtypes (dozens). These are configuration/parameterization packets.
 The first byte (bytes[0]) indicates which parameter. Examples:
 Identifiers
@@ -1911,6 +1944,7 @@ var Int16 = function (value) {
     return (ref &gt; 0x7FFF) ? ref - 0x10000 : ref;
 };
 </code></pre>
+<h2 id="_1"></h2>
 <h2 id="lambdas-for-example">Lambdas for example</h2>
 <h3 id="lambda-functions">Lambda Functions</h3>
 <p>The Lambda functions are the <strong>core</strong> of the system.<br />
