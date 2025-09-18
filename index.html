@@ -834,7 +834,7 @@ AAjSAD4=</p>
   return (parseInt(hex, 16).toString(2)).padStart(8, '0');
 }
 
-//MerryIot Leak Detection sensor
+//IQWL sensor
 function decodeUplink(input) {
     let fPort = input.fPort;
     let payloadlens = input.bytes.length;
@@ -1915,9 +1915,9 @@ var Int16 = function (value) {
 <h3 id="lambda-functions">Lambda Functions</h3>
 <p>The Lambda functions are the <strong>core</strong> of the system.<br />
 They handle all calculations and business logic decisions.</p>
-<h1 id="lambda-function-process_senospace">Lambda Function: <code>Process_senospace</code></h1>
+<h1 id="lambda-function-process_iqsl">Lambda Function: <code>Process_iqsl</code></h1>
 <h2 id="purpose">Purpose</h2>
-<p>Only for Water Leak Devices from Manufacture Senospace. Doesn't include Toilet Sensors</p>
+<p>Only for Water Leak Devices of type IQSL. Doesn't include Toilet Sensors</p>
 <h2 id="main-operations-and-algorithms">Main Operations and Algorithms:</h2>
 <ul>
 <li>
@@ -1927,20 +1927,20 @@ They handle all calculations and business logic decisions.</p>
 <p>Saves all connected gateways in a list and saves it in the database.</p>
 </li>
 <li>
-<p>Saves data in the browan_water_leak_data table and updates the latest data in the devices_last_data table.</p>
+<p>Saves data in the iqwl_data table and updates the latest data in the devices_last_data table.</p>
 </li>
 </ul>
 <p>Note: Alerts are not sent by this Lambda. This Lambda sends data to another Lambda (SendAlertNotification) and that one will decide whether to send an alert.</p>
 <hr />
 <h2 id="input-source">Input Source</h2>
 <p>Receives messages from the following SQS queue:<br />
-<strong><code>senospace_uplink_queue</code></strong></p>
+<strong><code>iqsl_uplink_queue</code></strong></p>
 <h2 id="output-destinations">Output Destinations</h2>
 <ul>
 <li>Sends data to Lambda: <strong><code>SendAlertNotification</code></strong></li>
 <li>Stores data in the following tables:</li>
 <li><code>devices_details</code></li>
-<li><code>senospace_data</code></li>
+<li><code>iqsl_data</code></li>
 <li><code>devices_last_data</code></li>
 </ul>
 <hr />
@@ -1997,9 +1997,9 @@ They handle all calculations and business logic decisions.</p>
     ]
 }
 </code></pre>
-<h1 id="lambda-function-process_long_flush_senospace">Lambda Function: <code>Process_long_flush_senospace</code></h1>
+<h1 id="lambda-function-process_long_flush_iqsl">Lambda Function: <code>Process_long_flush_iqsl</code></h1>
 <h2 id="purpose_1">Purpose</h2>
-<p>Only for Toilet Sensor Devices from Manufacture Senospace filtered by the uplinks of type LONG_FLUSH (payload_type_id = 10).</p>
+<p>Only for Toilet Sensor Devices from type IQSL filtered by the uplinks of type LONG_FLUSH (payload_type_id = 10).</p>
 <h2 id="main-operations-and-algorithms_1">Main Operations and Algorithms:</h2>
 <h3 id="how-does-long-flush-work">How Does Long Flush Work?</h3>
 <p>The device only sends the uplink <strong>after 3 minutes (default)</strong> of continuous flushing.<br />
@@ -2010,7 +2010,7 @@ Because of that, the Lambda must register that the flush <strong>started 3 minut
 <p>When a flush ends, a different type of uplink is sent:<br />
 <strong>Last Event Water Usage</strong> (<code>payload_type_id = 11</code>).<br />
 However, this uplink is processed by <strong>another Lambda</strong>:<br />
-<code>Process_water_usage_senospace</code>.</p>
+<code>Process_water_usage_iqsl</code>.</p>
 <hr />
 <h3 id="custom-long-flush-duration">Custom Long Flush Duration</h3>
 <p>The user can request the device to register a flush <strong>only after 4 or more minutes</strong>. In this case:</p>
@@ -2036,19 +2036,19 @@ However, this uplink is processed by <strong>another Lambda</strong>:<br />
 </li>
 <li>
 <p>The device is renamed with a <code>-flow</code> suffix to distinguish Toilet Sensor data from Leak Sensor data,<br />
-  since <strong>Senospace includes both sensor types</strong> in the same transmitter.</p>
+  since <strong>IQSL includes both sensor types</strong> in the same transmitter.</p>
 </li>
 </ul>
 <hr />
 <h2 id="input-source_1">Input Source</h2>
 <p>Receives messages from the following SQS queue:<br />
-<strong><code>long_flush_senospace_uplink_queue</code></strong></p>
+<strong><code>iqsl_long_flush_uplink_queue</code></strong></p>
 <h2 id="output-destinations_1">Output Destinations</h2>
 <ul>
 <li>Sends data to Lambda: <strong><code>SendAlertToiletNotification</code></strong>, <strong><code>LateLongFlush</code></strong></li>
 <li>Stores data in the following tables:</li>
 <li><code>devices_details</code></li>
-<li><code>senospace_alerts_data</code></li>
+<li><code>iqsl_alerts_data</code></li>
 <li><code>devices_last_data</code></li>
 </ul>
 <hr />
@@ -2066,9 +2066,9 @@ However, this uplink is processed by <strong>another Lambda</strong>:<br />
     &quot;frame_count&quot;: 3642
 }
 </code></pre>
-<h1 id="lambda-function-process_water_usage_senospace">Lambda Function: <code>Process_water_usage_senospace</code></h1>
+<h1 id="lambda-function-process_water_usage_iqsl">Lambda Function: <code>Process_water_usage_iqsl</code></h1>
 <h2 id="purpose_2">Purpose</h2>
-<p>Only for Toilet Sensor Devices from Manufacture Senospace filtered by the uplinks of type WATER_USAGE (payload_type_id = 11).</p>
+<p>Only for Toilet Sensor Devices from type IQSL filtered by the uplinks of type WATER_USAGE (payload_type_id = 11).</p>
 <h2 id="main-operations-and-algorithms_2">Main Operations and Algorithms:</h2>
 <h3 id="how-does-water-usage-work">How Does Water Usage Work?</h3>
 <p>Gallons_spent = Pulse_total_pulses * 0.264172</p>
@@ -2086,13 +2086,13 @@ However, this uplink is processed by <strong>another Lambda</strong>:<br />
 <hr />
 <h2 id="input-source_2">Input Source</h2>
 <p>Receives messages from the following SQS queue:<br />
-<strong><code>water_usage_senospace_uplink_queue</code></strong></p>
+<strong><code>iqsl_water_usage_uplink_queue</code></strong></p>
 <h2 id="output-destinations_2">Output Destinations</h2>
 <ul>
 <li>Sends data to Lambda: <strong><code>SendAlertToiletNotification</code></strong></li>
 <li>Stores data in the following tables:</li>
 <li><code>devices_details</code></li>
-<li><code>senospace_alerts_data</code></li>
+<li><code>iqsl_alerts_data</code></li>
 <li><code>devices_last_data</code></li>
 </ul>
 <hr />
@@ -2113,9 +2113,9 @@ However, this uplink is processed by <strong>another Lambda</strong>:<br />
     &quot;frame_count&quot;: 24465
 }
 </code></pre>
-<h1 id="lambda-function-process_toilet_heartbeat_senospace">Lambda Function: <code>Process_toilet_heartbeat_senospace</code></h1>
+<h1 id="lambda-function-process_toilet_heartbeat_iqsl">Lambda Function: <code>Process_toilet_heartbeat_iqsl</code></h1>
 <h2 id="purpose_3">Purpose</h2>
-<p>Only for Toilet Sensor Devices from Manufacture Senospace filtered by the uplinks of type HEARTBEAT (payload_type_id = 9).</p>
+<p>Only for Toilet Sensor Devices from Type IQSL filtered by the uplinks of type HEARTBEAT (payload_type_id = 9).</p>
 <h2 id="main-operations-and-algorithms_3">Main Operations and Algorithms:</h2>
 <h3 id="how-does-the-heartbeat-work">How Does the Heartbeat Work?</h3>
 <p>The heartbeat shows what has occurred since the last heartbeat:</p>
@@ -2130,13 +2130,13 @@ then the gallons spent during this ongoing long flush are <strong>pre-calculated
 <hr />
 <h2 id="input-source_3">Input Source</h2>
 <p>Receives messages from the following SQS queue:<br />
-<strong><code>BrowanWaterLeakUplinkQueue</code></strong></p>
+<strong><code>IQWLWaterLeakUplinkQueue</code></strong></p>
 <h2 id="output-destinations_3">Output Destinations</h2>
 <ul>
-<li>Sends data to Lambda: <strong><code>toilet_heartbeat_senospace_uplink_queue</code></strong></li>
+<li>Sends data to Lambda: <strong><code>iqsl_toilet_heartbeat_uplink_queue</code></strong></li>
 <li>Stores data in the following tables:</li>
 <li><code>devices_details</code></li>
-<li><code>senospace_alerts_data</code></li>
+<li><code>iqsl_alerts_data</code></li>
 <li><code>devices_last_data</code></li>
 </ul>
 <hr />
@@ -2158,9 +2158,9 @@ then the gallons spent during this ongoing long flush are <strong>pre-calculated
     &quot;frame_count&quot;: 325
 }
 </code></pre>
-<h1 id="lambda-function-process_alerts_senospace">Lambda Function: <code>Process_alerts_senospace</code></h1>
+<h1 id="lambda-function-process_alerts_iqsl">Lambda Function: <code>Process_alerts_iqsl</code></h1>
 <h2 id="purpose_4">Purpose</h2>
-<p>Only for Leak Sensor and Toilet Sensor Devices from Manufacture Senospace filtered by the uplinks of payload_type_id = 1,2,3,4,5,6,7,8 and 12.</p>
+<p>Only for Leak Sensor and Toilet Sensor Devices of type IQSL filtered by the uplinks of payload_type_id = 1,2,3,4,5,6,7,8 and 12.</p>
 <h2 id="main-operations-and-algorithms_4">Main Operations and Algorithms:</h2>
 <h3 id="processing-based-on-payload_type_id">Processing Based on <code>payload_type_id</code></h3>
 <p>Depending on the <code>payload_type_id</code>, the processing is different:</p>
@@ -2205,14 +2205,14 @@ then the gallons spent during this ongoing long flush are <strong>pre-calculated
 <hr />
 <h2 id="input-source_4">Input Source</h2>
 <p>Receives messages from the following SQS queue:<br />
-<strong><code>alerts_senospace_uplink_queue</code></strong></p>
+<strong><code>iqsl_alerts_uplink_queue</code></strong></p>
 <h2 id="output-destinations_4">Output Destinations</h2>
 <ul>
 <li>Sends data to Lambda: <strong><code>SendAlertNotification</code></strong>, <strong><code>SendAlertToiletNotification</code></strong></li>
 <li>Stores data in the following tables:</li>
 <li><code>devices_details</code></li>
-<li><code>senospace_data</code></li>
-<li><code>senospace_alerts_data</code></li>
+<li><code>iqsl_data</code></li>
+<li><code>iqsl_alerts_data</code></li>
 <li><code>devices_last_data</code></li>
 </ul>
 <hr />
