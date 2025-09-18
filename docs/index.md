@@ -21,10 +21,14 @@ If necessary, alerts are sent via **email** and **SMS**.
 6. Database Storage  
 Processed data is stored in the **database**.
 
-### From now on (September, 2025) the new devices should be onboarded on AWS IoT Core
+**From now on (September, 2025) the new devices should be onboarded on AWS IoT Core**
+
 
 
 ---
+---
+---
+
 
 ### Device Types:
 
