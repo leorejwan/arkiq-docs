@@ -381,6 +381,30 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#iqwl-dual-chip" class="md-nav__link">
+    <span class="md-ellipsis">
+      IQWL Dual Chip
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="IQWL Dual Chip">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-are-the-difference-between-iqwl-chip-lorawan-and-iqwl-chip-sidewalk" class="md-nav__link">
+    <span class="md-ellipsis">
+      What are the difference between IQWL chip Lorawan and IQWL chip Sidewalk
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#iqsl" class="md-nav__link">
     <span class="md-ellipsis">
       IQSL
@@ -683,6 +707,30 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#iqwl-dual-chip" class="md-nav__link">
+    <span class="md-ellipsis">
+      IQWL Dual Chip
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="IQWL Dual Chip">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-are-the-difference-between-iqwl-chip-lorawan-and-iqwl-chip-sidewalk" class="md-nav__link">
+    <span class="md-ellipsis">
+      What are the difference between IQWL chip Lorawan and IQWL chip Sidewalk
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#iqsl" class="md-nav__link">
     <span class="md-ellipsis">
       IQSL
@@ -965,6 +1013,19 @@ function decodeUplink(input) {
     }
 }
 </code></pre>
+<h3 id="iqwl-dual-chip">IQWL Dual Chip</h3>
+<p>Some IQWL has dual chip:
+1. Lorawan
+2. Sidewalk</p>
+<p>By default, when it's turned ON, it will try to connect to Lorawan.</p>
+<p>If after 3 attempts, it doesn't connect to Lorawan, it will connect to AMAZON Sidewalk.</p>
+<h4 id="what-are-the-difference-between-iqwl-chip-lorawan-and-iqwl-chip-sidewalk">What are the difference between IQWL chip Lorawan and IQWL chip Sidewalk</h4>
+<ul>
+<li>Lorawan needs to be connected to a network and be cover by a LoRaWAN gateway. Sidewalk doesn't need Gateways.</li>
+<li>Sidewalk uses the devices from Amazon to spread the connection</li>
+<li>Sidewalk nowadays (year 2025) only work in United States, but soon it will be active to other countries as well (<a href="https://coverage.sidewalk.amazon/">coverage.sidewalk.amazon</a>)</li>
+</ul>
+<p><strong>In September 2025, the Sidewalk devices are not in arkIQ cloud. It's in another cloud. The uplinks are forwarded via a Lambda that is connected to an AWS IoT Core Rule from the other AWS Account. We are working to bring all the Sidewalk chips to our cloud</strong></p>
 <h3 id="iqsl">IQSL</h3>
 <p>This device is in the same time a <strong>Leak Sensor</strong> and a <strong>Transmitter</strong>: </p>
 <ol>
@@ -2268,6 +2329,12 @@ then the gallons spent during this ongoing long flush are <strong>pre-calculated
     &quot;frame_count&quot;: 2789
 }
 </code></pre>
+<h2 id="downlinks">Downlinks</h2>
+<p>Tip: use this site to facilitate the convert from base to hex <a href="https://cryptii.com/pipes/base64-to-hex">base64-to-hex</a></p>
+<h3 id="iqwl_1">IQWL</h3>
+<p><strong>Downlink port: 204</strong></p>
+<p><strong>GET Configuration Downlink Payload: 00</strong></p>
+<p>There are some things that </p>
 
 
 
