@@ -28,7 +28,7 @@ Processed data is stored in the **database**.
 
 ### Device Types:
 
-ArkIQ has different types of devices
+arkIQ has different types of devices
 
 1- IQWL: Leak Sensor
 2- IQSL: Leak Sensor + Toilet Sensor
@@ -43,6 +43,7 @@ Tamper Detected: boolean
 Button Pressed: boolean
 Temperature (Celsius): decimal
 Humidity (%): decimal
+Battery (V): decimal
 
 Payload:
 
@@ -185,11 +186,11 @@ function decodeUplink(input) {
 
 ### IQSL
 
-This device has two parts: the leak sensor, that it's also a transmitter. If connected to a jack, it can extend the Leak detection probs, or can also receive information from the *Toilet Sensor*
+This device has two parts: the leak sensor, that it's also a transmitter. If connected to a headphone jack, it can extend the Leak detection probs, or can also receive information from the **Toilet Sensor**
 
-*By default at arkIQ, all IQSL is connected to a Toilet Sensor*
+**By default at arkIQ, all IQSL is connected to a Toilet Sensor**
 
-*1- Heartbeat Packet (fPort = 0x01)*
+**1- Heartbeat Packet (fPort = 0x01)**
 Attributes:
 Battery Voltage (V)
 batteryPercentage (%)
@@ -247,11 +248,11 @@ Decoded:
         "payloadTypeId": 1
 ```
 
-*2- Alert Packets (fPort = 0x02)*
+**2- Alert Packets (fPort = 0x02)**
 Triggered when a specific event occurs.
 The first byte (bytes[0]) defines the alert type:
 
-Case 1: External Leak (via headphone jack) - not applied, because the Toilet Sensor will be connected to the Jack, not a Leak Sensor Extensor.
+Case 1: External Leak (via headphone jack) - not applied, because the Toilet Sensor will be connected to the headphone Jack, not a Leak Sensor Extensor.
 Attributes:
 triggerValue: (No idea what is it)
 currentValue: int (how moisture is it. Can define the level to consider it a leak detected)
@@ -261,7 +262,7 @@ delayCount (No idea what is it)
 currentState: boolean (true = leak detected. false = leak cleared) 
 
 (IMPORTANT)
-Case 2: Local Leak (via bottom contact pins) *Only activate if the attribute pinLeakDetectionEnabled = true*
+Case 2: Local Leak (via bottom contact pins) **Only activate if the attribute pinLeakDetectionEnabled = true**
 Attributes:
 triggerValue: (No idea what is it)
 currentValue: int (how moisture is it. Can define the level to consider it a leak detected)
@@ -270,7 +271,7 @@ humidity
 delayCount (No idea what is it)
 currentState: boolean (true = leak detected. false = leak cleared) 
 
-Case 3: Tamper (magnet detected) - Activate when the magnet touch the device, simulating a tamper. *Only activate if the attribute tamperDetectionEnabled = true*
+Case 3: Tamper (magnet detected) - Activate when the magnet touch the device, simulating a tamper. **Only activate if the attribute tamperDetectionEnabled = true**
 
 Case 4: Push button pressed - Activated when button is pressed
 
@@ -281,13 +282,13 @@ Case 8: Humidity Low.
   From 5 to 8: Each includes current value, trigger threshold, guardband (safety margin), delay, and state.
 
 (IMPORTANT)
-Case 9: Total Events (cumulative counter): *Toilet Sensor Heartbeat*
+Case 9: Total Events (cumulative counter): **Toilet Sensor Heartbeat**
 Attributes:
 longEventTriggered: boolean (is it occuring a Long Flush right now? True = yes. False = No)
 alertInterval (no Idea what is it)
 deviceTypeId (no Idea what is it)
 totalEvents: int (How many flushes occured since the last heartbeat)
-totalLiters: decimal (How many litters were spent since the last heartbeat) -> *Convert to Gallons (litters * 0.264172)*
+totalLiters: decimal (How many litters were spent since the last heartbeat) -> **Convert to Gallons (litters ** 0.264172)**
 totalPulses: decimal (How many pulses were spent since the last heartbeat)
 
 
@@ -320,7 +321,7 @@ Decoded:
 
 
 (IMPORTANT)
-Case 10: Long Event Alert (long-duration events): *Toilet Sensor Long Event detected*
+Case 10: Long Event Alert (long-duration events): **Toilet Sensor Long Event detected**
 
 Attriubtes:
 currentState: boolean (True = started. False: Ended)
@@ -352,10 +353,10 @@ Decoded:
 ```
 
 (IMPORTANT)
-Case 11: Last Event Usage (usage of the last event): *Toilet Sensor water usage when a flush (normal or long) ends*
+Case 11: Last Event Usage (usage of the last event): **Toilet Sensor water usage when a flush (normal or long) ends**
 
 Attriubtes:
-totalLiters: decimal (how many litters was spent in the last flush)  -> *Convert to Gallons (litters * 0.264172)*
+totalLiters: decimal (how many litters was spent in the last flush)  -> **Convert to Gallons (litters x 0.264172)**
 totalPulses: decimal (how many pulses was spent in the last flush)
 humidity (%)
 temperature (Celsius)
@@ -364,7 +365,7 @@ Note: this payload will be triggered only after a flush (normal or long).
 - If this flush was a normal flush, we don't know how much time this flush was running. However, we know by this payload when it finished.
 - If this flush was a long flush, we know when it started, because the Long Flush payload (type: 10) was triggered before this payload of Last Event Usage (type: 11).
 - One challenge is to assign the Last Event Usage payload (type: 11) with the Long Flush payload (type: 10), because the payloads will be triggered in different moments. Also, the Last Event Usage payload doesn't indicate if the last event usage was long or a normal flush.
-- If the last flush spent less then 1 gallon. So this is consider a *Scape*, not a normal flush 
+- If the last flush spent less then 1 gallon. So this is consider a **Scape**, not a normal flush 
 
 Payload:
 
@@ -406,7 +407,7 @@ Bytes:
 Criptographic:
 -
 
-*3- System Packets (fPort = 0x03)*
+**3- System Packets (fPort = 0x03)**
 Maintenance/system packets.
 
 Case 0x01: Network Test Packet → reports SNR and RSSI.
@@ -419,7 +420,7 @@ Which alerts are enabled (bitmasks in bytes[7] and bytes[8]).
 
 Used for network testing and initial configuration after join.
 
-*4- Parameter Values (fPort = 0x04)*
+**4- Parameter Values (fPort = 0x04)**
 
 Here we have many subtypes (dozens). These are configuration/parameterization packets.
 The first byte (bytes[0]) indicates which parameter. Examples:
@@ -1211,6 +1212,10 @@ var Int16 = function (value) {
     return (ref > 0x7FFF) ? ref - 0x10000 : ref;
 };
 ```
+
+## 
+
+
 
 ## Lambdas for example
 
