@@ -70,7 +70,7 @@ function hex2bin(hex){
   return (parseInt(hex, 16).toString(2)).padStart(8, '0');
 }
 
-//MerryIot Leak Detection sensor
+//IQWL sensor
 function decodeUplink(input) {
 	let fPort = input.fPort;
 	let payloadlens = input.bytes.length;
@@ -1219,11 +1219,11 @@ var Int16 = function (value) {
 The Lambda functions are the **core** of the system.  
 They handle all calculations and business logic decisions.
 
-# Lambda Function: `Process_senospace`
+# Lambda Function: `Process_iqsl`
 
 ## Purpose
 
-Only for Water Leak Devices from Manufacture Senospace. Doesn't include Toilet Sensors
+Only for Water Leak Devices of type IQSL. Doesn't include Toilet Sensors
 
 ## Main Operations and Algorithms:
 
@@ -1231,7 +1231,7 @@ Only for Water Leak Devices from Manufacture Senospace. Doesn't include Toilet S
 
 * Saves all connected gateways in a list and saves it in the database.
 
-* Saves data in the browan_water_leak_data table and updates the latest data in the devices_last_data table.
+* Saves data in the iqwl_data table and updates the latest data in the devices_last_data table.
 
 Note: Alerts are not sent by this Lambda. This Lambda sends data to another Lambda (SendAlertNotification) and that one will decide whether to send an alert.
 
@@ -1240,14 +1240,14 @@ Note: Alerts are not sent by this Lambda. This Lambda sends data to another Lamb
 ## Input Source
 
 Receives messages from the following SQS queue:  
-**`senospace_uplink_queue`**
+**`iqsl_uplink_queue`**
 
 ## Output Destinations
 
 - Sends data to Lambda: **`SendAlertNotification`**
 - Stores data in the following tables:
   - `devices_details`
-  - `senospace_data`
+  - `iqsl_data`
   - `devices_last_data`
 
 ---
@@ -1309,11 +1309,11 @@ Receives messages from the following SQS queue:
 ```
 
 
-# Lambda Function: `Process_long_flush_senospace`
+# Lambda Function: `Process_long_flush_iqsl`
 
 ## Purpose
 
-Only for Toilet Sensor Devices from Manufacture Senospace filtered by the uplinks of type LONG_FLUSH (payload_type_id = 10).
+Only for Toilet Sensor Devices from type IQSL filtered by the uplinks of type LONG_FLUSH (payload_type_id = 10).
 
 ## Main Operations and Algorithms:
 
@@ -1330,7 +1330,7 @@ Because of that, the Lambda must register that the flush **started 3 minutes ear
 When a flush ends, a different type of uplink is sent:  
 **Last Event Water Usage** (`payload_type_id = 11`).  
 However, this uplink is processed by **another Lambda**:  
-`Process_water_usage_senospace`.
+`Process_water_usage_iqsl`.
 
 ---
 
@@ -1356,20 +1356,20 @@ The user can request the device to register a flush **only after 4 or more minut
   This data will arrive in a separate uplink of type **Last Event Water Usage** (`payload_type_id = 11`).
 
 - The device is renamed with a `-flow` suffix to distinguish Toilet Sensor data from Leak Sensor data,  
-  since **Senospace includes both sensor types** in the same transmitter.
+  since **IQSL includes both sensor types** in the same transmitter.
 ---
 
 ## Input Source
 
 Receives messages from the following SQS queue:  
-**`long_flush_senospace_uplink_queue`**
+**`iqsl_long_flush_uplink_queue`**
 
 ## Output Destinations
 
 - Sends data to Lambda: **`SendAlertToiletNotification`**, **`LateLongFlush`**
 - Stores data in the following tables:
   - `devices_details`
-  - `senospace_alerts_data`
+  - `iqsl_alerts_data`
   - `devices_last_data`
 
 ---
@@ -1392,11 +1392,11 @@ Receives messages from the following SQS queue:
 ```
 
 
-# Lambda Function: `Process_water_usage_senospace`
+# Lambda Function: `Process_water_usage_iqsl`
 
 ## Purpose
 
-Only for Toilet Sensor Devices from Manufacture Senospace filtered by the uplinks of type WATER_USAGE (payload_type_id = 11).
+Only for Toilet Sensor Devices from type IQSL filtered by the uplinks of type WATER_USAGE (payload_type_id = 11).
 
 ## Main Operations and Algorithms:
 
@@ -1421,14 +1421,14 @@ If it is after a Long Flush, then:
 ## Input Source
 
 Receives messages from the following SQS queue:  
-**`water_usage_senospace_uplink_queue`**
+**`iqsl_water_usage_uplink_queue`**
 
 ## Output Destinations
 
 - Sends data to Lambda: **`SendAlertToiletNotification`**
 - Stores data in the following tables:
   - `devices_details`
-  - `senospace_alerts_data`
+  - `iqsl_alerts_data`
   - `devices_last_data`
 
 ---
@@ -1455,11 +1455,11 @@ Receives messages from the following SQS queue:
 
 
 
-# Lambda Function: `Process_toilet_heartbeat_senospace`
+# Lambda Function: `Process_toilet_heartbeat_iqsl`
 
 ## Purpose
 
-Only for Toilet Sensor Devices from Manufacture Senospace filtered by the uplinks of type HEARTBEAT (payload_type_id = 9).
+Only for Toilet Sensor Devices from Type IQSL filtered by the uplinks of type HEARTBEAT (payload_type_id = 9).
 
 ## Main Operations and Algorithms:
 
@@ -1480,14 +1480,14 @@ then the gallons spent during this ongoing long flush are **pre-calculated**.
 ## Input Source
 
 Receives messages from the following SQS queue:  
-**`BrowanWaterLeakUplinkQueue`**
+**`IQWLWaterLeakUplinkQueue`**
 
 ## Output Destinations
 
-- Sends data to Lambda: **`toilet_heartbeat_senospace_uplink_queue`**
+- Sends data to Lambda: **`iqsl_toilet_heartbeat_uplink_queue`**
 - Stores data in the following tables:
   - `devices_details`
-  - `senospace_alerts_data`
+  - `iqsl_alerts_data`
   - `devices_last_data`
 
 ---
@@ -1514,11 +1514,11 @@ Receives messages from the following SQS queue:
 ```
 
 
-# Lambda Function: `Process_alerts_senospace`
+# Lambda Function: `Process_alerts_iqsl`
 
 ## Purpose
 
-Only for Leak Sensor and Toilet Sensor Devices from Manufacture Senospace filtered by the uplinks of payload_type_id = 1,2,3,4,5,6,7,8 and 12.
+Only for Leak Sensor and Toilet Sensor Devices of type IQSL filtered by the uplinks of payload_type_id = 1,2,3,4,5,6,7,8 and 12.
 
 ## Main Operations and Algorithms:
 
@@ -1557,15 +1557,15 @@ Depending on the `payload_type_id`, the processing is different:
 ## Input Source
 
 Receives messages from the following SQS queue:  
-**`alerts_senospace_uplink_queue`**
+**`iqsl_alerts_uplink_queue`**
 
 ## Output Destinations
 
 - Sends data to Lambda: **`SendAlertNotification`**, **`SendAlertToiletNotification`**
 - Stores data in the following tables:
   - `devices_details`
-  - `senospace_data`
-  - `senospace_alerts_data`
+  - `iqsl_data`
+  - `iqsl_alerts_data`
   - `devices_last_data`
 
 ---
