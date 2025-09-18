@@ -859,12 +859,12 @@ Processed data is stored in the <strong>database</strong>.</p>
 4- IQSV: Smart Valve  </p>
 <h3 id="iqwl">IQWL</h3>
 <p>Attributes:
-Water Leak Detected: boolean
-Tamper Detected: boolean
-Button Pressed: boolean
-Temperature (Celsius): decimal
-Humidity (%): decimal
-Battery (V): decimal</p>
+Water Leak Detected: boolean<br />
+Tamper Detected: boolean<br />
+Button Pressed: boolean<br />
+Temperature (Celsius): decimal<br />
+Humidity (%): decimal<br />
+Battery (V): decimal  </p>
 <p>Payload:</p>
 <p>Bytes:
 00 08 d2 00 3e</p>
@@ -998,11 +998,11 @@ function decodeUplink(input) {
 }
 </code></pre>
 <h3 id="iqwl-dual-chip">IQWL Dual Chip</h3>
-<p>Some IQWL has dual chip:
-1. Lorawan
-2. Sidewalk</p>
-<p>By default, when it's turned ON, it will try to connect to Lorawan.</p>
-<p>If after 3 attempts, it doesn't connect to Lorawan, it will connect to AMAZON Sidewalk.</p>
+<p>Some IQWL has dual chip:<br />
+1. Lorawan<br />
+2. Sidewalk  </p>
+<p>By default, when it's turned ON, it will try to connect to Lorawan.  </p>
+<p>If after 3 attempts, it doesn't connect to Lorawan, it will connect to AMAZON Sidewalk.  </p>
 <h4 id="what-are-the-difference-between-iqwl-chip-lorawan-and-iqwl-chip-sidewalk">What are the difference between IQWL chip Lorawan and IQWL chip Sidewalk</h4>
 <ul>
 <li>Lorawan needs to be connected to a network and be cover by a LoRaWAN gateway. Sidewalk doesn't need Gateways.</li>
@@ -1011,41 +1011,41 @@ function decodeUplink(input) {
 </ul>
 <p><strong>In September 2025, the Sidewalk devices are not in arkIQ cloud. It's in another cloud. The uplinks are forwarded via a Lambda that is connected to an AWS IoT Core Rule from the other AWS Account. We are working to bring all the Sidewalk chips to our cloud</strong></p>
 <h3 id="iqsl">IQSL</h3>
-<p>This device is in the same time a <strong>Leak Sensor</strong> and a <strong>Transmitter</strong>: </p>
+<p>This device is in the same time a <strong>Leak Sensor</strong> and a <strong>Transmitter</strong>:  </p>
 <ol>
 <li>
-<p>Leak Sensor: detects leak using its probs (Similar to IQWL devices).</p>
+<p>Leak Sensor: detects leak using its probs (Similar to IQWL devices).  </p>
 </li>
 <li>
-<p>Transmitter: it's possible to connect a headphone jack wth two functionalities:</p>
+<p>Transmitter: it's possible to connect a headphone jack wth two functionalities:  </p>
 </li>
 <li>
-<p>Extends Leak Sensor capacity. Another device can be connected to the IQSL that detects Water Leaks. So, using the Headphone Jack, the other device will let the IQSL know that there is an external Leak. <strong>Attribute externalLeakDetectionEnabled = TRUE to extend the Leak Detection to the headphone jack. Attribute externalLeakDetected = TRUE if the extensor detects leak.</strong></p>
+<p>Extends Leak Sensor capacity. Another device can be connected to the IQSL that detects Water Leaks. So, using the Headphone Jack, the other device will let the IQSL know that there is an external Leak. <strong>Attribute externalLeakDetectionEnabled = TRUE to extend the Leak Detection to the headphone jack. Attribute externalLeakDetected = TRUE if the extensor detects leak.</strong>  </p>
 </li>
 <li>
-<p>Connect a Toilet Sensor. The Toilet Sensor is a device that can be connected directly on a Toilet Pipe and it will give information about flushes and water usage. It can be connected using the Headphone Jack and will send toilet information to the transmitter. <strong>attribute externalLeakDetected = FALSE to make Toilet Sensor works.</strong> </p>
+<p>Connect a Toilet Sensor. The Toilet Sensor is a device that can be connected directly on a Toilet Pipe and it will give information about flushes and water usage. It can be connected using the Headphone Jack and will send toilet information to the transmitter. <strong>attribute externalLeakDetected = FALSE to make Toilet Sensor works.</strong>  </p>
 </li>
 </ol>
-<p><strong>The platform need to show if the IQSL is connected to a Leak Sensor, or to a Toilet Sensor, or if there's no headphone jack connected</strong></p>
-<p><strong>1- Heartbeat Packet (fPort = 0x01)</strong>
-Attributes:
-Battery Voltage (V)
-batteryPercentage (%)
-Temperature (Celsius)
-Humidity (%)
-pinLeakDetectionEnabled: boolean (default: true)
-externalLeakDetectionEnabled: boolean (TRUE to work the Leak Sensor extensor. FALSE to work the Toilet Sensor)
-tamperDetectionEnabled: boolean
-pinLeakDetected: boolean (if it's occuring a leak right now)
-externalLeakDetected: boolean (if Toilet Sensor connected, then always FALSE)
-powerDetected: boolean (No idea what is this)
-jackDetected: boolean (True, if connected to a Toilet Sensor)
-magnetDetected: boolean (Tamper detection using a magnet)</p>
-<p>Water Leak Detected: boolean
-Tamper Detected: boolean
-Button Pressed: boolean
-Temperature (Celsius): decimal
-Humidity (%): decimal</p>
+<p><strong>The platform need to show if the IQSL is connected to a Leak Sensor, or to a Toilet Sensor, or if there's no headphone jack connected</strong>  </p>
+<p><strong>1- Heartbeat Packet (fPort = 0x01)</strong><br />
+Attributes:<br />
+<em> </em><em>Battery Voltage (V)</em><em><br />
+</em> <strong>batteryPercentage (%)</strong><br />
+<em> </em><em>Temperature (Celsius)</em><em><br />
+</em> <strong>Humidity (%)</strong><br />
+<em> </em><em>pinLeakDetectionEnabled: boolean (default: true)</em><em>
+* </em><em>externalLeakDetectionEnabled: boolean</em><em> (TRUE to work the Leak Sensor extensor. FALSE to work the Toilet Sensor)<br />
+</em> <strong>tamperDetectionEnabled: boolean</strong><br />
+<em> </em><em>pinLeakDetected: boolean</em><em> (if it's occuring a leak right now)<br />
+</em> <strong>externalLeakDetected: boolean</strong> (if Toilet Sensor connected, then always FALSE)<br />
+<em> </em><em>powerDetected: boolean</em><em> (No idea what is this)<br />
+</em> <strong>jackDetected: boolean</strong> (True, if connected to a Toilet Sensor)<br />
+<em> </em><em>magnetDetected: boolean</em><em> (Tamper detection using a magnet)<br />
+</em> <strong>Water Leak Detected: boolean</strong><br />
+<em> </em><em>Tamper Detected: boolean</em><em><br />
+</em> <strong>Button Pressed: boolean</strong><br />
+<em> </em><em>Temperature (Celsius): decimal</em><em><br />
+</em> <strong>Humidity (%): decimal</strong>  </p>
 <p>Payload:</p>
 <p>Bytes:
 01B06408D614720BFFB405</p>
@@ -1077,16 +1077,16 @@ AbBkCNYUcgv/tAU=</p>
         &quot;payloadTypeId&quot;: 1
 </code></pre>
 <p><strong>2- Alert Packets (fPort = 0x02)</strong>
-Triggered when a specific event occurs.
-The first byte (bytes[0]) defines the alert type:</p>
-<p>Case 1: External Leak (via headphone jack) - not applied, because the Toilet Sensor will be connected to the headphone Jack, not a Leak Sensor Extensor.
-Attributes:
-triggerValue: (No idea what is it)
-currentValue: int (how moisture is it. Can define the level to consider it a leak detected)
-temperature 
-humidity 
-delayCount (No idea what is it)
-currentState: boolean (true = leak detected. false = leak cleared) </p>
+Triggered when a specific event occurs.<br />
+The first byte (bytes[0]) defines the alert type:  </p>
+<p><strong>Case 1: External Leak (via headphone jack)</strong> - not applied, because the Toilet Sensor will be connected to the headphone Jack, not a Leak Sensor Extensor.<br />
+Attributes:<br />
+<em> </em><em>triggerValue:</em><em> (No idea what is it)
+* </em><em>currentValue: int</em><em> (how moisture is it. Can define the level to consider it a leak detected)
+* </em><em>temperature</em><em> 
+* </em><em>humidity</em><em> 
+* </em><em>delayCount</em><em> (No idea what is it)
+* </em><em>currentState: boolean</em>* (true = leak detected. false = leak cleared) </p>
 <p>(IMPORTANT)
 Case 2: Local Leak (via bottom contact pins) <strong>Only activate if the attribute pinLeakDetectionEnabled = true</strong>
 Attributes:
