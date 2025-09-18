@@ -184,6 +184,26 @@ function decodeUplink(input) {
 }
 ```
 
+### IQWL Dual Chip
+
+Some IQWL has dual chip:
+1. Lorawan
+2. Sidewalk
+
+By default, when it's turned ON, it will try to connect to Lorawan.
+
+If after 3 attempts, it doesn't connect to Lorawan, it will connect to AMAZON Sidewalk.
+
+#### What are the difference between IQWL chip Lorawan and IQWL chip Sidewalk
+
+* Lorawan needs to be connected to a network and be cover by a LoRaWAN gateway. Sidewalk doesn't need Gateways.
+* Sidewalk uses the devices from Amazon to spread the connection
+* Sidewalk nowadays (year 2025) only work in United States, but soon it will be active to other countries as well ([coverage.sidewalk.amazon](https://coverage.sidewalk.amazon/))
+
+**In September 2025, the Sidewalk devices are not in arkIQ cloud. It's in another cloud. The uplinks are forwarded via a Lambda that is connected to an AWS IoT Core Rule from the other AWS Account. We are working to bring all the Sidewalk chips to our cloud**
+
+
+
 ### IQSL
 
 This device is in the same time a **Leak Sensor** and a **Transmitter**: 
@@ -1603,3 +1623,15 @@ Receives messages from the following SQS queue:
     "frame_count": 2789
 }
 ```
+
+## Downlinks
+
+Tip: use this site to facilitate the convert from base to hex [base64-to-hex](https://cryptii.com/pipes/base64-to-hex)
+
+### IQWL
+
+**Downlink port: 204**
+
+**GET Configuration Downlink Payload: 00**
+
+There are some things that 
