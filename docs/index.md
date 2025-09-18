@@ -186,9 +186,17 @@ function decodeUplink(input) {
 
 ### IQSL
 
-This device has two parts: the leak sensor, that it's also a transmitter. If connected to a headphone jack, it can extend the Leak detection probs, or can also receive information from the **Toilet Sensor**
+This device is in the same time a **Leak Sensor** and a **Transmitter**: 
 
-**By default at arkIQ, all IQSL is connected to a Toilet Sensor**
+1. Leak Sensor: detects leak using its probs (Similar to IQWL devices).
+
+2. Transmitter: it's possible to connect a headphone jack wth two functionalities:
+
+* Extends Leak Sensor capacity. Another device can be connected to the IQSL that detects Water Leaks. So, using the Headphone Jack, the other device will let the IQSL know that there is an external Leak. **Attribute externalLeakDetectionEnabled = TRUE to extend the Leak Detection to the headphone jack. Attribute externalLeakDetected = TRUE if the extensor detects leak.**
+
+* Connect a Toilet Sensor. The Toilet Sensor is a device that can be connected directly on a Toilet Pipe and it will give information about flushes and water usage. It can be connected using the Headphone Jack and will send toilet information to the transmitter. **attribute externalLeakDetected = FALSE to make Toilet Sensor works.** 
+
+**The platform need to show if the IQSL is connected to a Leak Sensor, or to a Toilet Sensor, or if there's no headphone jack connected**
 
 **1- Heartbeat Packet (fPort = 0x01)**
 Attributes:
@@ -197,10 +205,10 @@ batteryPercentage (%)
 Temperature (Celsius)
 Humidity (%)
 pinLeakDetectionEnabled: boolean (default: true)
-externalLeakDetectionEnabled: boolean (default: false in order to work the Toilet Sensor)
+externalLeakDetectionEnabled: boolean (TRUE to work the Leak Sensor extensor. FALSE to work the Toilet Sensor)
 tamperDetectionEnabled: boolean
 pinLeakDetected: boolean (if it's occuring a leak right now)
-externalLeakDetected: boolean (always false)
+externalLeakDetected: boolean (if Toilet Sensor connected, then always FALSE)
 powerDetected: boolean (No idea what is this)
 jackDetected: boolean (True, if connected to a Toilet Sensor)
 magnetDetected: boolean (Tamper detection using a magnet)
