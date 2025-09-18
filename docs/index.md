@@ -1628,10 +1628,7 @@ Receives messages from the following SQS queue:
 
 Tip: use this site to facilitate the convert from base to hex [base64-to-hex](https://cryptii.com/pipes/base64-to-hex)
 
-### IQWL
-
-**Downlink port: 204**
-
-**GET Configuration Downlink Payload: 00**
-
-There are some things that 
+### Working on...
+Downlinks
+IQSV (Smart Valve devices)
+IQWM (Water meters devices)

@@ -14,7 +14,7 @@ theme:
         icon: material/weather-night
         name: Switch to dark mode
   font:
-    text: Roboto
+    text: Verdana
     code: Roboto Mono
   features:
     - navigation.instant
