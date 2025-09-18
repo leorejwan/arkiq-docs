@@ -44,12 +44,12 @@ arkIQ has different types of devices
 ### IQWL
 
 Attributes:
-Water Leak Detected: boolean
-Tamper Detected: boolean
-Button Pressed: boolean
-Temperature (Celsius): decimal
-Humidity (%): decimal
-Battery (V): decimal
+Water Leak Detected: boolean  
+Tamper Detected: boolean  
+Button Pressed: boolean  
+Temperature (Celsius): decimal  
+Humidity (%): decimal  
+Battery (V): decimal  
 
 Payload:
 
@@ -192,13 +192,13 @@ function decodeUplink(input) {
 
 ### IQWL Dual Chip
 
-Some IQWL has dual chip:
-1. Lorawan
-2. Sidewalk
+Some IQWL has dual chip:  
+1. Lorawan  
+2. Sidewalk  
 
-By default, when it's turned ON, it will try to connect to Lorawan.
+By default, when it's turned ON, it will try to connect to Lorawan.  
 
-If after 3 attempts, it doesn't connect to Lorawan, it will connect to AMAZON Sidewalk.
+If after 3 attempts, it doesn't connect to Lorawan, it will connect to AMAZON Sidewalk.  
 
 #### What are the difference between IQWL chip Lorawan and IQWL chip Sidewalk
 
@@ -212,40 +212,37 @@ If after 3 attempts, it doesn't connect to Lorawan, it will connect to AMAZON Si
 
 ### IQSL
 
-This device is in the same time a **Leak Sensor** and a **Transmitter**: 
+This device is in the same time a **Leak Sensor** and a **Transmitter**:  
 
-1. Leak Sensor: detects leak using its probs (Similar to IQWL devices).
+1. Leak Sensor: detects leak using its probs (Similar to IQWL devices).  
 
-2. Transmitter: it's possible to connect a headphone jack wth two functionalities:
+2. Transmitter: it's possible to connect a headphone jack wth two functionalities:  
 
-* Extends Leak Sensor capacity. Another device can be connected to the IQSL that detects Water Leaks. So, using the Headphone Jack, the other device will let the IQSL know that there is an external Leak. **Attribute externalLeakDetectionEnabled = TRUE to extend the Leak Detection to the headphone jack. Attribute externalLeakDetected = TRUE if the extensor detects leak.**
+* Extends Leak Sensor capacity. Another device can be connected to the IQSL that detects Water Leaks. So, using the Headphone Jack, the other device will let the IQSL know that there is an external Leak. **Attribute externalLeakDetectionEnabled = TRUE to extend the Leak Detection to the headphone jack. Attribute externalLeakDetected = TRUE if the extensor detects leak.**  
 
-* Connect a Toilet Sensor. The Toilet Sensor is a device that can be connected directly on a Toilet Pipe and it will give information about flushes and water usage. It can be connected using the Headphone Jack and will send toilet information to the transmitter. **attribute externalLeakDetected = FALSE to make Toilet Sensor works.** 
+* Connect a Toilet Sensor. The Toilet Sensor is a device that can be connected directly on a Toilet Pipe and it will give information about flushes and water usage. It can be connected using the Headphone Jack and will send toilet information to the transmitter. **attribute externalLeakDetected = FALSE to make Toilet Sensor works.**  
 
-**The platform need to show if the IQSL is connected to a Leak Sensor, or to a Toilet Sensor, or if there's no headphone jack connected**
+**The platform need to show if the IQSL is connected to a Leak Sensor, or to a Toilet Sensor, or if there's no headphone jack connected**  
 
-**1- Heartbeat Packet (fPort = 0x01)**
-Attributes:
-Battery Voltage (V)
-batteryPercentage (%)
-Temperature (Celsius)
-Humidity (%)
-pinLeakDetectionEnabled: boolean (default: true)
-externalLeakDetectionEnabled: boolean (TRUE to work the Leak Sensor extensor. FALSE to work the Toilet Sensor)
-tamperDetectionEnabled: boolean
-pinLeakDetected: boolean (if it's occuring a leak right now)
-externalLeakDetected: boolean (if Toilet Sensor connected, then always FALSE)
-powerDetected: boolean (No idea what is this)
-jackDetected: boolean (True, if connected to a Toilet Sensor)
-magnetDetected: boolean (Tamper detection using a magnet)
-
-
-
-Water Leak Detected: boolean
-Tamper Detected: boolean
-Button Pressed: boolean
-Temperature (Celsius): decimal
-Humidity (%): decimal
+**1- Heartbeat Packet (fPort = 0x01)**  
+Attributes:  
+* **Battery Voltage (V)**  
+* **batteryPercentage (%)**  
+* **Temperature (Celsius)**  
+* **Humidity (%)**  
+* **pinLeakDetectionEnabled: boolean (default: true)**
+* **externalLeakDetectionEnabled: boolean** (TRUE to work the Leak Sensor extensor. FALSE to work the Toilet Sensor)  
+* **tamperDetectionEnabled: boolean**  
+* **pinLeakDetected: boolean** (if it's occuring a leak right now)  
+* **externalLeakDetected: boolean** (if Toilet Sensor connected, then always FALSE)  
+* **powerDetected: boolean** (No idea what is this)  
+* **jackDetected: boolean** (True, if connected to a Toilet Sensor)  
+* **magnetDetected: boolean** (Tamper detection using a magnet)  
+* **Water Leak Detected: boolean**  
+* **Tamper Detected: boolean**  
+* **Button Pressed: boolean**  
+* **Temperature (Celsius): decimal**  
+* **Humidity (%): decimal**  
 
 Payload:
 
@@ -283,17 +280,17 @@ Decoded:
 ```
 
 **2- Alert Packets (fPort = 0x02)**
-Triggered when a specific event occurs.
-The first byte (bytes[0]) defines the alert type:
+Triggered when a specific event occurs.  
+The first byte (bytes[0]) defines the alert type:  
 
-Case 1: External Leak (via headphone jack) - not applied, because the Toilet Sensor will be connected to the headphone Jack, not a Leak Sensor Extensor.
-Attributes:
-triggerValue: (No idea what is it)
-currentValue: int (how moisture is it. Can define the level to consider it a leak detected)
-temperature 
-humidity 
-delayCount (No idea what is it)
-currentState: boolean (true = leak detected. false = leak cleared) 
+**Case 1: External Leak (via headphone jack)** - not applied, because the Toilet Sensor will be connected to the headphone Jack, not a Leak Sensor Extensor.  
+Attributes:  
+* **triggerValue:** (No idea what is it)
+* **currentValue: int** (how moisture is it. Can define the level to consider it a leak detected)
+* **temperature** 
+* **humidity** 
+* **delayCount** (No idea what is it)
+* **currentState: boolean** (true = leak detected. false = leak cleared) 
 
 (IMPORTANT)
 Case 2: Local Leak (via bottom contact pins) **Only activate if the attribute pinLeakDetectionEnabled = true**
