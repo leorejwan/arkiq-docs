@@ -354,16 +354,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#-" class="md-nav__link">
-    <span class="md-ellipsis">
-      ---
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="---">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
   <a href="#device-types" class="md-nav__link">
     <span class="md-ellipsis">
       Device Types:
@@ -371,8 +361,8 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#iqwl" class="md-nav__link">
     <span class="md-ellipsis">
       IQWL
@@ -380,8 +370,8 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#iqwl-dual-chip" class="md-nav__link">
     <span class="md-ellipsis">
       IQWL Dual Chip
@@ -404,18 +394,13 @@
     </nav>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#iqsl" class="md-nav__link">
     <span class="md-ellipsis">
       IQSL
     </span>
   </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -686,16 +671,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#-" class="md-nav__link">
-    <span class="md-ellipsis">
-      ---
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="---">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
   <a href="#device-types" class="md-nav__link">
     <span class="md-ellipsis">
       Device Types:
@@ -703,8 +678,8 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#iqwl" class="md-nav__link">
     <span class="md-ellipsis">
       IQWL
@@ -712,8 +687,8 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#iqwl-dual-chip" class="md-nav__link">
     <span class="md-ellipsis">
       IQWL Dual Chip
@@ -736,18 +711,13 @@
     </nav>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#iqsl" class="md-nav__link">
     <span class="md-ellipsis">
       IQSL
     </span>
   </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -878,14 +848,15 @@ Processed data is stored in the <strong>database</strong>.</p>
 </li>
 </ol>
 <p><strong>From now on (September, 2025) the new devices should be onboarded on AWS IoT Core</strong></p>
-<h2 id="-">---</h2>
+<hr />
+<hr />
 <hr />
 <h3 id="device-types">Device Types:</h3>
 <p>arkIQ has different types of devices</p>
-<p>1- IQWL: Leak Sensor
-2- IQSL: Leak Sensor + Toilet Sensor
-3- IQWM: Water Meter
-4- IQSV: Smart Valve</p>
+<p>1- IQWL: Leak Sensor<br />
+2- IQSL: Leak Sensor + Toilet Sensor<br />
+3- IQWM: Water Meter<br />
+4- IQSV: Smart Valve  </p>
 <h3 id="iqwl">IQWL</h3>
 <p>Attributes:
 Water Leak Detected: boolean
@@ -1236,29 +1207,31 @@ Maintenance/system packets.</p>
 <p>Here we have many subtypes (dozens). These are configuration/parameterization packets.
 The first byte (bytes[0]) indicates which parameter. Examples:
 Identifiers
-Case 0: devEui.
-Case 1: appEui.
-Case 2: appKey (disabled for security reasons).
+* Case 0: devEui.
+* Case 1: appEui.
+* Case 2: appKey (disabled for security reasons).<br />
 Network and operation configs
-Case 3–9: retry, confirm mode, join mode, ADR, device class, duty cycle, datarate.
-Case 10–15: RX1/RX2 delays, datarate, TX power.
-Case 16–19: region, channel mask, network mode, mode.
+* Case 3–9: retry, confirm mode, join mode, ADR, device class, duty cycle, datarate.
+* Case 10–15: RX1/RX2 delays, datarate, TX power.
+* Case 16–19: region, channel mask, network mode, mode.<br />
 Operation groups
-Case 21–26: heartbeat interval, join group, network test group, battery group, no-ack recovery, heartbeat group.
+* Case 21–26: heartbeat interval, join group, network test group, battery group, no-ack recovery, heartbeat group.
 Event acknowledgements
-Case 27–37: Individual acks for external leak, pin leak, tamper, button, temp high/low, humidity high/low, pulse count, etc.
-Detailed sensor configs
-Cases 38–46: Leak detection (pin/external) + buzzer + all-in-one parameters.
-Cases 47–59: Button, high/low temperature, high/low humidity, all with buzzer/guardband/delay.
-Case 60–61: temperature/humidity offsets.
-Case 62: sensing interval.
-Case 63–64: pulse counting configs.
-Case 65–69: Jack detection (enabled, buzzer, ack, etc.) and global buzzer control.</p>
+* Case 27–37: Individual acks for external leak, pin leak, tamper, button, temp high/low, humidity high/low, pulse count, etc.<br />
+Detailed sensor configs<br />
+* Cases 38–46: Leak detection (pin/external) + buzzer + all-in-one parameters.
+* Cases 47–59: Button, high/low temperature, high/low humidity, all with buzzer/guardband/delay.
+* Case 60–61: temperature/humidity offsets.
+* Case 62: sensing interval.
+* Case 63–64: pulse counting configs.
+* Case 65–69: Jack detection (enabled, buzzer, ack, etc.) and global buzzer control.</p>
 <p>Summary of the Payload Packets:</p>
-<p>Heartbeat (0x01): general status (battery, SNR, sensors, flags).
-Alerts (0x02): triggered events (leak, tamper, button, temperature, humidity, pulses, jack).
-System (0x03): network/system packets (tests, join, firmware).
-Parameters (0x04): massive set of configuration parameters (network, ADR, alerts, delays, buzzer, offsets, etc.).</p>
+<ul>
+<li>Heartbeat (0x01): general status (battery, SNR, sensors, flags).</li>
+<li>Alerts (0x02): triggered events (leak, tamper, button, temperature, humidity, pulses, jack).</li>
+<li>System (0x03): network/system packets (tests, join, firmware).</li>
+<li>Parameters (0x04): massive set of configuration parameters (network, ADR, alerts, delays, buzzer, offsets, etc.).</li>
+</ul>
 <h3 id="iqsl-payload-formatter-ttn">IQSL Payload Formatter (TTN):</h3>
 <pre><code class="language-js">function DoDecode(fPort, bytes) {
     var decoded = { data: {} };
