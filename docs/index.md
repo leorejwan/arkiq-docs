@@ -26,7 +26,9 @@ Processed data is stored in the **database**.
 
 
 ---
+
 ---
+
 ---
 
 
@@ -34,10 +36,10 @@ Processed data is stored in the **database**.
 
 arkIQ has different types of devices
 
-1- IQWL: Leak Sensor
-2- IQSL: Leak Sensor + Toilet Sensor
-3- IQWM: Water Meter
-4- IQSV: Smart Valve
+1- IQWL: Leak Sensor  
+2- IQSL: Leak Sensor + Toilet Sensor  
+3- IQWM: Water Meter  
+4- IQSV: Smart Valve  
 
 ### IQWL
 
@@ -457,31 +459,31 @@ Used for network testing and initial configuration after join.
 Here we have many subtypes (dozens). These are configuration/parameterization packets.
 The first byte (bytes[0]) indicates which parameter. Examples:
 Identifiers
-Case 0: devEui.
-Case 1: appEui.
-Case 2: appKey (disabled for security reasons).
+* Case 0: devEui.
+* Case 1: appEui.
+* Case 2: appKey (disabled for security reasons).  
 Network and operation configs
-Case 3–9: retry, confirm mode, join mode, ADR, device class, duty cycle, datarate.
-Case 10–15: RX1/RX2 delays, datarate, TX power.
-Case 16–19: region, channel mask, network mode, mode.
+* Case 3–9: retry, confirm mode, join mode, ADR, device class, duty cycle, datarate.
+* Case 10–15: RX1/RX2 delays, datarate, TX power.
+* Case 16–19: region, channel mask, network mode, mode.  
 Operation groups
-Case 21–26: heartbeat interval, join group, network test group, battery group, no-ack recovery, heartbeat group.
+* Case 21–26: heartbeat interval, join group, network test group, battery group, no-ack recovery, heartbeat group.
 Event acknowledgements
-Case 27–37: Individual acks for external leak, pin leak, tamper, button, temp high/low, humidity high/low, pulse count, etc.
-Detailed sensor configs
-Cases 38–46: Leak detection (pin/external) + buzzer + all-in-one parameters.
-Cases 47–59: Button, high/low temperature, high/low humidity, all with buzzer/guardband/delay.
-Case 60–61: temperature/humidity offsets.
-Case 62: sensing interval.
-Case 63–64: pulse counting configs.
-Case 65–69: Jack detection (enabled, buzzer, ack, etc.) and global buzzer control.
+* Case 27–37: Individual acks for external leak, pin leak, tamper, button, temp high/low, humidity high/low, pulse count, etc.  
+Detailed sensor configs  
+* Cases 38–46: Leak detection (pin/external) + buzzer + all-in-one parameters.
+* Cases 47–59: Button, high/low temperature, high/low humidity, all with buzzer/guardband/delay.
+* Case 60–61: temperature/humidity offsets.
+* Case 62: sensing interval.
+* Case 63–64: pulse counting configs.
+* Case 65–69: Jack detection (enabled, buzzer, ack, etc.) and global buzzer control.
 
 Summary of the Payload Packets:
 
-Heartbeat (0x01): general status (battery, SNR, sensors, flags).
-Alerts (0x02): triggered events (leak, tamper, button, temperature, humidity, pulses, jack).
-System (0x03): network/system packets (tests, join, firmware).
-Parameters (0x04): massive set of configuration parameters (network, ADR, alerts, delays, buzzer, offsets, etc.).
+* Heartbeat (0x01): general status (battery, SNR, sensors, flags).
+* Alerts (0x02): triggered events (leak, tamper, button, temperature, humidity, pulses, jack).
+* System (0x03): network/system packets (tests, join, firmware).
+* Parameters (0x04): massive set of configuration parameters (network, ADR, alerts, delays, buzzer, offsets, etc.).
 
 ### IQSL Payload Formatter (TTN):
 
