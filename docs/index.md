@@ -1,47 +1,57 @@
 # arkIQ System Documentation
 
-
-
 ### TTN to AWS
+    
 
 ![TTN AWS Integration Diagram](https://arkiq-open-images.s3.us-east-1.amazonaws.com/ttn+aws+integration+diagram.png)
+    
 
 1. **Uplink sent from TTN to AWS**
+    
 
 2. **AWS IoT Core** receives the uplinks.  
    A separate **IoT Core Rule** is defined for each device type, extracting the necessary information from each uplink.
+    
 
 3. The extracted data is sent to a **dedicated queue** for each device type.
+    
 
 4. Each queue triggers a **separate Lambda function**, which processes the received data and follows a distinct path depending on the device.
+    
 
 5. Alerts  
 If necessary, alerts are sent via **email** and **SMS**.
+    
 
 6. Database Storage  
 Processed data is stored in the **database**.
+    
 
 **From now on (September, 2025) the new devices should be onboarded on AWS IoT Core**
 
-
+---
+    
 
 ---
+    
 
 ---
-
----
-
+    
 
 ### Device Types:
+    
 
 arkIQ has different types of devices
+    
 
 1- IQWL: Leak Sensor  
 2- IQSL: Leak Sensor + Toilet Sensor  
 3- IQWM: Water Meter  
 4- IQSV: Smart Valve  
+    
 
 ### IQWL
+    
 
 Attributes:
 Water Leak Detected: boolean  
@@ -50,14 +60,18 @@ Button Pressed: boolean
 Temperature (Celsius): decimal  
 Humidity (%): decimal  
 Battery (V): decimal  
+    
 
 Payload:
+    
 
 Bytes:
 00 08 d2 00 3e
+    
 
 Criptographic:
 AAjSAD4=
+    
 
 Decoded:
 ```json
@@ -70,12 +84,14 @@ Decoded:
   "water": 0
 }
 ```
+    
 
 Payload Formatter (TTN):
 ```js
 function hex2bin(hex){
   return (parseInt(hex, 16).toString(2)).padStart(8, '0');
 }
+    
 
 //IQWL sensor
 function decodeUplink(input) {
@@ -127,16 +143,19 @@ function decodeUplink(input) {
 			temperature = temperature_int;
 		}
 		humi =  intput_list[3]; //Humidity calculate
+    
 
 		let water_hex = intput_list[0].toString(16).padStart(2, '0'); // Sensor Status calculate
 		let water_binary = hex2bin(water_hex); 
 		let water_st = water_binary.substring(7, 8); 
 		let button_st = water_binary.substring(6, 7); 
 		let tamper_st = water_binary.substring(5, 6); 
+    
 
 		water = parseInt(water_st); // water status
 		button = parseInt(button_st); // Button pressed
 		tamper = parseInt(tamper_st); // Tamper detected
+    
 
 		return {
 		data: {
@@ -189,26 +208,35 @@ function decodeUplink(input) {
 	}
 }
 ```
+    
 
 ### IQWL Dual Chip
+    
 
 Some IQWL has dual chip:  
 1. LoRaWAN  
 2. Amazon Sidewalk  
+    
 
 By default, when it's turned ON, it will try to connect to LoRaWAN.  
+    
 
 If after 3 attempts, it doesn't connect to LoRaWAN, it will connect to Amazon Sidewalk.  
+    
 
 #### What are the difference between IQWL chip LoRaWAN and IQWL chip Sidewalk
+    
 
 * LoRaWAN needs to be connected to a network and be cover by a LoRaWAN gateway. Sidewalk doesn't need Gateways.
 * Sidewalk uses the devices from Amazon to spread the connection
 * Sidewalk nowadays (year 2025) only work in United States, but soon it will be active to other countries as well ([coverage.sidewalk.amazon](https://coverage.sidewalk.amazon/))
+    
 
 **In September 2025, the Sidewalk devices are not in arkIQ cloud. It's in another cloud. The uplinks are forwarded via a Lambda that is connected to an AWS IoT Core Rule from the other AWS Account. We are working on it to bring all the Sidewalk chips to our cloud**
+    
 
 The Lambda that receives the messages from Amazon Sidewalk is called ReceiveUplinkBrowanSidewalkLambda. This is the payload structure of every payload:
+    
 
 ```json
 {
@@ -227,27 +255,38 @@ The Lambda that receives the messages from Amazon Sidewalk is called ReceiveUpli
     }
 }
 ```
+    
 
 This payoload doesn't contain the DEVEUI or the Serial Number of the device. Rather, it contains the **WirelessDeviceId**
 To assign which device is related to this particular uplink, the **WirelessDeviceId** need to be used.   
 There is a table in the database that contains the **serial-number WirelessDeviceId** relationship: **iqwl_sidewalk_deviceid_connector**  
+    
 
 **In the future, when all Amazon Sidewalk chips will be onboarded on our cloud, then we'll implement a more efficient and less manual way to assign the devices with the uplinks.**
+    
 
+    
 
 ### IQSL
+    
 
 This device is in the same time a **Leak Sensor** and a **Transmitter**:  
+    
 
 1. Leak Sensor: detects leak using its probs (Similar to IQWL devices).  
+    
 
 2. Transmitter: it's possible to connect a headphone jack wth two functionalities:  
+    
 
 * Extends Leak Sensor capacity. Another device can be connected to the IQSL that detects Water Leaks. So, using the Headphone Jack, the other device will let the IQSL know that there is an external Leak. **Attribute externalLeakDetectionEnabled = TRUE to extend the Leak Detection to the headphone jack. Attribute externalLeakDetected = TRUE if the extensor detects leak.**  
+    
 
 * Connect a Toilet Sensor. The Toilet Sensor is a device that can be connected directly on a Toilet Pipe and it will give information about flushes and water usage. It can be connected using the Headphone Jack and will send toilet information to the transmitter. **attribute externalLeakDetected = FALSE to make Toilet Sensor works.**  
+    
 
 **The platform need to show if the IQSL is connected to a Leak Sensor, or to a Toilet Sensor, or if there's no headphone jack connected**  
+    
 
 **1- Heartbeat Packet (fPort = 0x01)**  
 Attributes:  
@@ -268,14 +307,18 @@ Attributes:
 * **Button Pressed: boolean**  
 * **Temperature (Celsius): decimal**  
 * **Humidity (%): decimal**  
+    
 
 Payload:
+    
 
 Bytes:
 01B06408D614720BFFB405
+    
 
 Criptographic:
 AbBkCNYUcgv/tAU=
+    
 
 Decoded:
 ```json
@@ -303,10 +346,12 @@ Decoded:
         "payloadType": "Heartbeat",
         "payloadTypeId": 1
 ```
+    
 
 **2- Alert Packets (fPort = 0x02)**
 Triggered when a specific event occurs.  
 The first byte (bytes[0]) defines the alert type:  
+    
 
 **Case 1: External Leak (via headphone jack)** - not applied, because the Toilet Sensor will be connected to the headphone Jack, not a Leak Sensor Extensor.  
 Attributes:  
@@ -316,6 +361,7 @@ Attributes:
 * **humidity** 
 * **delayCount** (No idea what is it)
 * **currentState: boolean** (true = leak detected. false = leak cleared) 
+    
 
 (IMPORTANT)
 Case 2: Local Leak (via bottom contact pins) **Only activate if the attribute pinLeakDetectionEnabled = true**
@@ -326,16 +372,20 @@ temperature
 humidity 
 delayCount (No idea what is it)
 currentState: boolean (true = leak detected. false = leak cleared) 
+    
 
 Case 3: Tamper (magnet detected) - Activate when the magnet touch the device, simulating a tamper. **Only activate if the attribute tamperDetectionEnabled = true**
+  
 
 Case 4: Push button pressed - Activated when button is pressed
+  
 
 Case 5: Temperature High. Defined by downlink th hreshold
 Case 6: Temperature Low.
 Case 7: Humidity High.
 Case 8: Humidity Low.
   From 5 to 8: Each includes current value, trigger threshold, guardband (safety margin), delay, and state.
+  
 
 (IMPORTANT)
 Case 9: Total Events (cumulative counter): **Toilet Sensor Heartbeat**
@@ -346,15 +396,20 @@ deviceTypeId (no Idea what is it)
 totalEvents: int (How many flushes occured since the last heartbeat)
 totalLiters: decimal (How many litters were spent since the last heartbeat) -> **Convert to Gallons (litters ** 0.264172)**
 totalPulses: decimal (How many pulses were spent since the last heartbeat)
+  
 
+  
 
 Payload:
+  
 
 Bytes:
 0900001661000101000005
+  
 
 Criptographic:
 CQAAFmEAAQEAAAU=
+  
 
 Decoded:
 ```json
@@ -374,24 +429,32 @@ Decoded:
         "payloadTypeId": 9
       }
 ```
+  
 
+  
 
 (IMPORTANT)
 Case 10: Long Event Alert (long-duration events): **Toilet Sensor Long Event detected**
+  
 
 Attriubtes:
 currentState: boolean (True = started. False: Ended)
 durationTrigger: int (How many time flushing is consider a Long Flush and it will trigger this payload - in milliseconds)
+  
 
 Note: this payload will only be triggered after the pulse_duration_trigger interval. So we don't know when the flush started, but we know when the flush is running for a long time. So in order to identify when the flush started, it has to subtract the pulse_duration_trigger value.
+  
 
 Payload:
+  
 
 Bytes:
 -
+  
 
 Criptographic:
 -
+  
 
 Decoded:
 ```json
@@ -407,29 +470,36 @@ Decoded:
         "payloadTypeId": 10
       }
 ```
+  
 
 (IMPORTANT)
 Case 11: Last Event Usage (usage of the last event): **Toilet Sensor water usage when a flush (normal or long) ends**
+  
 
 Attriubtes:
 totalLiters: decimal (how many litters was spent in the last flush)  -> **Convert to Gallons (litters x 0.264172)**
 totalPulses: decimal (how many pulses was spent in the last flush)
 humidity (%)
 temperature (Celsius)
+  
 
 Note: this payload will be triggered only after a flush (normal or long). 
 - If this flush was a normal flush, we don't know how much time this flush was running. However, we know by this payload when it finished.
 - If this flush was a long flush, we know when it started, because the Long Flush payload (type: 10) was triggered before this payload of Last Event Usage (type: 11).
 - One challenge is to assign the Last Event Usage payload (type: 11) with the Long Flush payload (type: 10), because the payloads will be triggered in different moments. Also, the Last Event Usage payload doesn't indicate if the last event usage was long or a normal flush.
 - If the last flush spent less then 1 gallon. So this is consider a **Scape**, not a normal flush 
+  
 
 Payload:
+  
 
 Bytes:
 0B00001CCC01088115FF
+  
 
 Criptographic:
 CwAAHMwBCIEV/w==
+  
 
 Decoded:
 ```json
@@ -448,35 +518,48 @@ Decoded:
   "payloadTypeId": 11
 }
 ```
+  
 
+  
 
 (IMPORTANT)
 Case 12: Jack connected / disconnected
 Attriubtes:
 jackConnected: Boolean (true: yes. false: no)
+  
 
 Payload:
+  
 
 Bytes:
 -
+  
 
 Criptographic:
 -
+  
 
 **3- System Packets (fPort = 0x03)**
 Maintenance/system packets.
+  
 
 Case 0x01: Network Test Packet → reports SNR and RSSI.
+  
 
 Case 0x02: Joined Uplink Packet → confirms joining the network and sends configs:
+  
 
 firmwareVersion, heartbeatInterval, sensorCheckInterval.
+  
 
 Which alerts are enabled (bitmasks in bytes[7] and bytes[8]).
+  
 
 Used for network testing and initial configuration after join.
+  
 
 **4- Parameter Values (fPort = 0x04)**
+  
 
 Here we have many subtypes (dozens). These are configuration/parameterization packets.
 The first byte (bytes[0]) indicates which parameter. Examples:
@@ -499,21 +582,26 @@ Detailed sensor configs
 * Case 62: sensing interval.
 * Case 63–64: pulse counting configs.
 * Case 65–69: Jack detection (enabled, buzzer, ack, etc.) and global buzzer control.
+  
 
 Summary of the Payload Packets:
+  
 
 * Heartbeat (0x01): general status (battery, SNR, sensors, flags).
 * Alerts (0x02): triggered events (leak, tamper, button, temperature, humidity, pulses, jack).
 * System (0x03): network/system packets (tests, join, firmware).
 * Parameters (0x04): massive set of configuration parameters (network, ADR, alerts, delays, buzzer, offsets, etc.).
+  
 
 ### IQSL Payload Formatter (TTN):
+  
 
 ```js
 function DoDecode(fPort, bytes) {
     var decoded = { data: {} };
     switch (fPort) {
         case 0x01: { // HeartBeat Packet
+  
 
             decoded.data.state = {};
             decoded.data.enabledAlerts = {};
@@ -537,9 +625,11 @@ function DoDecode(fPort, bytes) {
         }
             break;
         case 0x02: { // Alert Packet
+  
 
             decoded.payloadType = "Alert";
             decoded.payloadTypeId = bytes[0];
+  
 
             switch (bytes[0]) {
                 case 1: {
@@ -614,16 +704,19 @@ function DoDecode(fPort, bytes) {
                 case 9: {
                     decoded.data.settings = {};
                     decoded.alertType = "Pulse Counting (Total Events)";
+  
 
                     decoded.data.totalPulses = (bytes[1] << 24) + (bytes[2] << 16) + (bytes[3] << 8) + bytes[4];
                     decoded.data.totalEvents = UInt16(bytes[5] << 8 | bytes[6]);
                     decoded.data.settings.deviceTypeId = bytes[7];
                     decoded.data.longEventTriggered = bytes[8];
                     decoded.data.settings.alertInterval = UInt16(bytes[9] << 8 | bytes[10]) * 100;
+  
 
                     switch (decoded.data.settings.deviceTypeId) {
                         // Generic Device Type, no usage calculations
                         case 0x00: {
+  
 
                         } break;
                         // Toilet Flow Sensor
@@ -632,6 +725,7 @@ function DoDecode(fPort, bytes) {
                             decoded.data.totalLiters = decoded.data.totalPulses / 1077;
                         } break;
                     }
+  
 
                 } break;
                 case 10: {
@@ -654,6 +748,7 @@ function DoDecode(fPort, bytes) {
                             decoded.data.totalLiters = decoded.data.totalPulses / 1077;
                         } break;
                     }
+  
 
                 } break;
                 case 12: {
@@ -663,6 +758,7 @@ function DoDecode(fPort, bytes) {
             }
         } break;
         case 0x03: { // System Packets
+  
 
             decoded.payloadType = "System";
             decoded.payloadTypeId = bytes[0];
@@ -691,16 +787,20 @@ function DoDecode(fPort, bytes) {
                     decoded.data.settings.enabledAlerts.humidityLow = ((bytes[7] & 0b10000000) > 0);
                     decoded.data.settings.enabledAlerts.pulseCountingAlert = ((bytes[8] & 0b00000001) > 0);
                     decoded.data.settings.enabledAlerts.pulseCountingEventLongAlert = ((bytes[8] & 0b00000010) > 0);
+  
 
                 } break;
             }
+  
 
         }
             break;
         case 0x04: { // Parameter Values
+  
 
             decoded.payloadType = "Parameter Values";
             decoded.payloadTypeId = bytes[0];
+  
 
             switch (bytes[0]) {
                 // devEui Parameter
@@ -714,6 +814,7 @@ function DoDecode(fPort, bytes) {
                     devEuiTemp += bytes[6].toString(16).padStart(2, '0').toUpperCase();
                     devEuiTemp += bytes[7].toString(16).padStart(2, '0').toUpperCase();
                     devEuiTemp += bytes[8].toString(16).padStart(2, '0').toUpperCase();
+  
 
                     decoded.parameterType = "devEui";
                     decoded.data.devEui = devEuiTemp;
@@ -729,6 +830,7 @@ function DoDecode(fPort, bytes) {
                     appEuiTemp += bytes[6].toString(16).padStart(2, '0').toUpperCase();
                     appEuiTemp += bytes[7].toString(16).padStart(2, '0').toUpperCase();
                     appEuiTemp += bytes[8].toString(16).padStart(2, '0').toUpperCase();
+  
 
                     decoded.parameterType = "appEui";
                     decoded.data.appEui = appEuiTemp;
@@ -817,6 +919,7 @@ function DoDecode(fPort, bytes) {
                     let channelMaskTemp = "";
                     channelMaskTemp += bytes[1].toString(16).padStart(2, '0').toUpperCase();
                     channelMaskTemp += bytes[2].toString(16).padStart(2, '0').toUpperCase();
+  
 
                     decoded.parameterType = "Channel Mask";
                     decoded.data.channelMask = channelMaskTemp;
@@ -844,6 +947,7 @@ function DoDecode(fPort, bytes) {
                     decoded.data.failCountToTriggerLongDelay = bytes[5];
                     decoded.data.longDelayBetweenSequence = UInt16(bytes[6] << 8 | bytes[7]);
                     
+  
 
                 } break;
                 // Network Test Group Parameter
@@ -958,6 +1062,7 @@ function DoDecode(fPort, bytes) {
                     decoded.data.silenceCounter = UInt16(bytes[3] << 8 | bytes[4]);
                     decoded.data.beepCount = bytes[5];
                     decoded.data.beepDuration = UInt16(bytes[6] << 8 | bytes[7]);
+  
 
                 } break;
                 // Pin Leak Detection All Parameter
@@ -971,6 +1076,7 @@ function DoDecode(fPort, bytes) {
                     decoded.data.silenceCounter = UInt16(bytes[5] << 8 | bytes[6]);
                     decoded.data.beepCount = bytes[7];
                     decoded.data.beepDuration = UInt16(bytes[8] << 8 | bytes[9]);
+  
 
                 } break;
                 // External Leak Detection Parameter
@@ -1059,6 +1165,7 @@ function DoDecode(fPort, bytes) {
                     decoded.data.silenceCounter = bytes[7];
                     decoded.data.beepCount = bytes[8];
                     decoded.data.beepDuration = UInt16(bytes[9] << 8 | bytes[10]);
+  
 
                 } break;
                 // Temperature Low Parameter
@@ -1173,6 +1280,7 @@ function DoDecode(fPort, bytes) {
                     decoded.data.deviceTypeId = bytes[2];
                     decoded.data.reportingInterval = UInt16(bytes[3] << 8 | bytes[4]);
                     decoded.data.eventDelayValue = UInt16(bytes[5] << 8 | bytes[6]);
+  
 
                 } break;
                 // Pulse Counting Long Event Parameter
@@ -1214,7 +1322,9 @@ function DoDecode(fPort, bytes) {
                     decoded.data.disabled = bytes[1];
                 } break;
             }
+  
 
+  
 
         } break;
         default:
@@ -1223,16 +1333,19 @@ function DoDecode(fPort, bytes) {
     }
     return decoded;
 }
+  
 
 // For TTN
 function Decoder(bytes, fPort) {
     return DoDecode(fPort, bytes);
 }
+  
 
 // For Chirpstack
 function Decode(fPort, bytes, variables) {
     return DoDecode(fPort, bytes);
 }
+  
 
 // Chirpstack v3 to v4 compatibility wrapper
 function decodeUplink(input) {
@@ -1240,42 +1353,53 @@ function decodeUplink(input) {
         data: Decode(input.fPort, input.bytes, input.variables)
     };
 }
+  
 
 var UInt4 = function (value) {
     return (value & 0xF);
 };
+  
 
 var Int4 = function (value) {
     var ref = UInt4(value);
     return (ref > 0x7) ? ref - 0x10 : ref;
 };
+  
 
 var UInt8 = function (value) {
     return (value & 0xFF);
 };
+  
 
 var Int8 = function (value) {
     var ref = UInt8(value);
     return (ref > 0x7F) ? ref - 0x100 : ref;
 };
+  
 
 var UInt16 = function (value) {
     return (value & 0xFFFF);
 };
+  
 
 var Int16 = function (value) {
     var ref = UInt16(value);
     return (ref > 0x7FFF) ? ref - 0x10000 : ref;
 };
 ```
+  
 
 ## IQSV
+  
 
 IQSV devices are installed directly in the pipe and measure the water flow, temperature, pressure and contain a valve that can open and close the flow.
+  
 
 **There are 2 types of IQSV**
+  
 
 * IQSV V1 and V2 (older ones - until Sep/2025):
+  
 
 **Attributes:**
 BatteryAlarm: bool  
@@ -1294,14 +1418,18 @@ ReverseFlowAlarm: bool (when reverse flow)
 ValveStatus: open/close
 WaterPressure: decimal (in MPA) -> * 145.038 to convert to PSI
 WaterTemperature: decimal (in Celsius) -> Need to convert to °F
+  
 
 Payload:
+  
 
 Bytes:
 FEFE68201335465201740081259090002B612461002B812155002B000000003500000000652300810248091122092520000013161F…
+  
 
 Criptographic:
 /v5oIBM1RlIBdACBJZCQACthJGEAK4EhVQArAAAAADUAAAAAZSMAgQJICREiCSUgAAATFh8=
+  
 
 Decoded:
 ```json
@@ -1324,6 +1452,7 @@ Decoded:
     "WaterTemperature": "23.65"
 }
 ```
+  
 
 Payload Formatter (TTN):
 ```js
@@ -1336,21 +1465,26 @@ function decodeUplink(input)
     var Downlink;
     var interval, inte_unit;
     var deff = "null";
+  
 
     //METER SN DECODE
     if (bytes[0] == "131")
     {
         //control code
         if (bytes[0] == "131") { Code = bytes[0].toString(16); }
+  
 
         //data length
         if (bytes[1] == "10") { Len = "Length of the Data Frame : " + bytes[1]; }
+  
 
         //data identification for meter SN uplink
         if (bytes[2] == "129" & bytes[3] == "10") { ID = "Read Meter Serial Number"; }
+  
 
         //uplink data counter
         Count = "Uplink Data Counter : " + bytes[4];
+  
 
         //meter SN indicator
         Data1 = bytes[5];
@@ -1373,6 +1507,7 @@ function decodeUplink(input)
         Concat4 = Concat1.concat(Concat2);
         Concat5 = Concat3.concat(Data1);
         Concat = Concat4.concat(Concat5);
+  
 
         return {
         Command_Code: Code,
@@ -1382,6 +1517,7 @@ function decodeUplink(input)
                 Meter_Addr: Concat
         };
     }
+  
 
     //METER TOTALIZER DECODE
     else if (bytes[0] == 0x81)
@@ -1389,19 +1525,24 @@ function decodeUplink(input)
         console.log(bytes[0])
         //control code
         if (bytes[0] == 0x81) { Code = bytes[0].toString(16); }
+  
 
         //data length(not include battery indicator byte)
         if (bytes[1] == 0x0A) { Len = "Length of the Data Frame : " + bytes[1]; }
+  
 
         //data identification for totalizer uplink
         if (bytes[2] == 0x144 & bytes[3] == 0x31) { ID = "Read Meter Cumulative Value"; }
+  
 
         //uplink data counter
         Count = "Uplink Data Counter : " + bytes[4];
+  
 
         //decimals
         if (bytes[5] == 0x2B) { Unit = "Cubic Meter"; decimals = 1000; }
         else if (bytes[5] == 0x2C) { Unit = "Cubic Meter"; decimals = 100; }
+  
 
         //totalizer
         a = bytes[6];
@@ -1416,10 +1557,13 @@ function decodeUplink(input)
         concat2 = b.concat(a);
         raw = concat1.concat(concat2);
         output = raw / decimals;
+  
 
+  
 
         //valve indicator
         if (bytes[10] == 0x01) { Status = "Valve Control : Available"; } else { Status = "Valve Control : Not Available"; }
+  
 
         //error bits ST1
         bitst1 = bytes[10];
@@ -1441,7 +1585,9 @@ function decodeUplink(input)
         //if (bytes[11] == "2") { Err = "Empty Pipe Alert"; }
         //if (bytes[11] == "1") { Err = "Battery Alert"; }
         //if (bytes[11] == "0") { Err = "No Error"; }
+  
 
+  
 
         //error bits ST2
         bitt = bytes[11];
@@ -1467,6 +1613,7 @@ function decodeUplink(input)
         //if (bytes[11] == "2") { Err = "Empty Pipe Alert"; }
         //if (bytes[11] == "1") { Err = "Battery Alert"; }
         //if (bytes[11] == "0") { Err = "No Error"; }
+  
 
         //battery indicator
         Bat = (bytes[12] - 1) / 253;
@@ -1485,6 +1632,7 @@ function decodeUplink(input)
                 Raw_Data: raw
                 };
     }
+  
 
     //SENDING INTERVAL DECODE
     else if (bytes[0] == "34")
@@ -1492,10 +1640,13 @@ function decodeUplink(input)
         //control code
         if (bytes[0] == "34") { Code = bytes[0].toString(16); }
         ID = "Modify Meter Uplink Interval";
+  
 
+  
 
         //data length(not include battery indicator byte)
         if (bytes[1] == "10") { Len = "Length of the Data Frame : " + bytes[1]; }
+  
 
         //interval
         a = bytes[5].toString(16);
@@ -1503,6 +1654,7 @@ function decodeUplink(input)
         concat2 = b.concat(a);
         interval = parseInt(concat2, 16);
         inte_unit = "minutes";
+  
 
         return {
         Command_Code: Code,
@@ -1512,8 +1664,10 @@ function decodeUplink(input)
                 Interval_Unit: inte_unit
                 };
     }
+  
 
     else if(bytes[0] == "81"){
+  
 
         if (bytes.substring(10, 12) == "2B") 
         { 
@@ -1521,27 +1675,33 @@ function decodeUplink(input)
             decimals = 1000; 
         }
         var unit = Unit;
+  
 
         a = bytes.substring(12, 14);
         b = bytes.substring(14, 16);
         c = bytes.substring(16, 18);
         d = bytes.substring(18, 20);
+  
 
         a = a.toString(10);
         b = b.toString(10);
         c = c.toString(10);
         d = d.toString(10);
+  
 
         concat1 = d.concat(c);
         concat2 = b.concat(a);
         raw = concat1.concat(concat2);
         var waterFlowInCubicMeter = raw / decimals;
+  
 
         console.log(bytes.substring(24, 26).toString(10))
+  
 
         Bat = (bytes.substring(24, 26).toString(10) - 1) / 253;
         Battery = (Bat * 100).toFixed(2);
         var battery = Battery; 
+  
 
         return {
             data: {
@@ -1551,6 +1711,7 @@ function decodeUplink(input)
             },
             };
     }
+  
 
     else if(bytes[0].toString(16) == "fe"){
         
@@ -1575,20 +1736,24 @@ function decodeUplink(input)
             doubleUCC = 0.0001
             decimalsToFixed = 4
         }
+  
 
         var cumulativeConsuption1 = bytes[20];
         var cumulativeConsuption2 = bytes[19];
         var cumulativeConsuption3 = bytes[18];
         var cumulativeConsuption4 = bytes[17];
+  
 
         var base16CC1 = cumulativeConsuption1.toString(16).padStart(2, '0');
         var base16CC2 = cumulativeConsuption2.toString(16).padStart(2, '0');
         var base16CC3 = cumulativeConsuption3.toString(16).padStart(2, '0');
         var base16CC4 = cumulativeConsuption4.toString(16).padStart(2, '0');
+  
 
         var base16CC = base16CC1 + base16CC2 + base16CC3 + base16CC4
         var floatCC = parseFloat(base16CC)
         var realCumulativeConsumption = (floatCC * doubleUCC).toFixed(decimalsToFixed)
+  
 
         //Previous day Consumption
         var unitPreviousDayConsuption = bytes[21];
@@ -1610,21 +1775,26 @@ function decodeUplink(input)
             doubleUDPC = 0.0001
             decimalsToFixed = 4
         }
+  
 
+  
 
         var prevDayConsuption1 = bytes[25];
         var prevDayConsuption2 = bytes[24];
         var prevDayConsuption3 = bytes[23];
         var prevDayConsuption4 = bytes[22];
+  
 
         var base16PDC1 = prevDayConsuption1.toString(16).padStart(2, '0');
         var base16PDC2 = prevDayConsuption2.toString(16).padStart(2, '0');
         var base16PDC3 = prevDayConsuption3.toString(16).padStart(2, '0');
         var base16PDC4 = prevDayConsuption4.toString(16).padStart(2, '0');
+  
 
         var base16PDC = base16PDC1 + base16PDC2 + base16PDC3 + base16PDC4
         var floatPDC = parseFloat(base16PDC)
         var realPrevDayConsumption = (floatPDC * doubleUDPC).toFixed(decimalsToFixed)
+  
 
         //Reverse Cumulative Consumption
         var unitReverseCumulativeConsumption = bytes[26];
@@ -1646,20 +1816,24 @@ function decodeUplink(input)
             doubleURCC = 0.0001
             decimalsToFixed = 4
         }
+  
 
         var reverseCumulativeConsumption1 = bytes[30];
         var reverseCumulativeConsumption2 = bytes[29];
         var reverseCumulativeConsumption3 = bytes[28];
         var reverseCumulativeConsumption4 = bytes[27];
+  
 
         var base16RCC1 = reverseCumulativeConsumption1.toString(16).padStart(2, '0');
         var base16RCC2 = reverseCumulativeConsumption2.toString(16).padStart(2, '0');
         var base16RCC3 = reverseCumulativeConsumption3.toString(16).padStart(2, '0');
         var base16RCC4 = reverseCumulativeConsumption4.toString(16).padStart(2, '0');
+  
 
         var base16RCC = base16RCC1 + base16RCC2 + base16RCC3 + base16RCC4
         var floatRCC = parseFloat(base16RCC)
         var realReverseCumulativeConsumption = (floatRCC * doubleURCC).toFixed(decimalsToFixed)
+  
 
         //Instant Consumption
         var unitInstantConsumption = bytes[31];
@@ -1681,48 +1855,60 @@ function decodeUplink(input)
             doubleUIC = 0.0001
             decimalsToFixed = 4
         }
+  
 
         var instanceConsumption1 = bytes[35];
         var instanceConsumption2 = bytes[34];
         var instanceConsumption3 = bytes[33];
         var instanceConsumption4 = bytes[32];
+  
 
         var base16IC1 = instanceConsumption1.toString(16).padStart(2, '0');
         var base16IC2 = instanceConsumption2.toString(16).padStart(2, '0');
         var base16IC3 = instanceConsumption3.toString(16).padStart(2, '0');
         var base16IC4 = instanceConsumption4.toString(16).padStart(2, '0');
+  
 
         var base16IC = base16IC1 + base16IC2 + base16IC3 + base16IC4
         var floatIC = parseFloat(base16IC)
         var realInstantConsumption = (floatIC * doubleUIC).toFixed(decimalsToFixed)
+  
 
         //Water Temperature
         var waterTemperature1 = bytes[38];
         var waterTemperature2 = bytes[37];
         var waterTemperature3 = bytes[36];
+  
 
         var base16WT1 = waterTemperature1.toString(16).padStart(2, '0');
         var base16WT2 = waterTemperature2.toString(16).padStart(2, '0');
         var base16WT3 = waterTemperature3.toString(16).padStart(2, '0');
+  
 
         var base16WT = base16WT1 + base16WT2 + base16WT3
         var floatWT = parseFloat(base16WT)
         var realWaterTemperature = (floatWT * 0.01).toFixed(2)
+  
 
         //Water Pressure
         var waterPressure1 = bytes[40];
         var waterPressure2 = bytes[39];
+  
 
         var base16WP1 = waterPressure1.toString(16).padStart(2, '0');
         var base16WP2 = waterPressure2.toString(16).padStart(2, '0');
+  
 
         var base16WP = base16WP1 + base16WP2
         var floatWP = parseFloat(base16WP)
         var realWaterPressure = (floatWP * 0.001).toFixed(3)
+  
 
+  
 
         var ST1 = bytes[48];
         var ST1Binary = ST1.toString(2).padStart(8, '0');
+  
 
         valveStatusBinary = ST1Binary.substring(6)
         var valveStatus = "open"
@@ -1733,36 +1919,47 @@ function decodeUplink(input)
         } else if(valveStatusBinary == "11"){
             valveStatus = "abnormal"
         }
+  
 
         var batteryAlarmBinary = ST1Binary.substring(5, 6)
         var batteryAlarm = batteryAlarmBinary == "0" ? false : true
+  
 
         var ST2 = bytes[49];
         var ST2Binary = ST2.toString(2).padStart(8, '0');
+  
 
         var lowBatteryAlarmBinary = ST2Binary.substring(7)
         var lowBatteryAlarm = lowBatteryAlarmBinary == "0" ? false : true
+  
 
         var emptyPipeAlarmBinary = ST2Binary.substring(6,7)
         var emptyPipeAlarm = emptyPipeAlarmBinary == "0" ? false : true
+  
 
         var reverseFlowAlarmBinary = ST2Binary.substring(5,6)
         var reverseFlowAlarm = reverseFlowAlarmBinary == "0" ? false : true
+  
 
         var overRangeAlarmBinary = ST2Binary.substring(4,5)
         var overRangeAlarm = overRangeAlarmBinary == "0" ? false : true
+  
 
         var overTemperatureAlarmBinary = ST2Binary.substring(3,4)
         var overTemperatureAlarm = overTemperatureAlarmBinary == "0" ? false : true
+  
 
         var EEPROMErrorBinary = ST2Binary.substring(2,3)
         var EEPROMError = EEPROMErrorBinary == "0" ? false : true
+  
 
         var leakageAlarmBinary = ST2Binary.substring(1,2)
         var leakageAlarm = leakageAlarmBinary == "0" ? false : true
+  
 
         var burstAlarmBinary = ST2Binary.substring(0,1)
         var burstAlarm = burstAlarmBinary == "0" ? false : true
+  
 
         return {
             data: {
@@ -1787,8 +1984,10 @@ function decodeUplink(input)
     }
 }
 ```
+  
 
 * IQSV DC and BP (new ones - from Sep/2025):
+  
 
 **Attributes:**
 BatteryAlarm: bool  
@@ -1807,14 +2006,18 @@ ValveStatus: open/close/ **half-open (25%, 50% or 75%)**
 WaterPressure: decimal (in MPA) -> * 145.038 to convert to PSI
 WaterTemperature: decimal (in Celsius) -> Need to convert to °F
 **PowerSupply: Battery/External Power Supply**
+  
 
 Payload:
+  
 
 Bytes:
 FEFE68100000000000000000000000002324000000000200C11615
+  
 
 Criptographic:
 /v5oEAAAAAAAAAAAAAAAACMkAAAAAAIAwRYV
+  
 
 Decoded:
 ```json
@@ -1837,6 +2040,7 @@ Decoded:
     "WaterTemperature": "23.65"
 }
 ```
+  
 
 Payload Formatter (TTN):
 ```js
@@ -1844,35 +2048,45 @@ function decodeUplink(input) {
   const bytes = input.bytes;
   const toLEHex = (arr) =>
     arr.map(b => b.toString(16).padStart(2, "0")).reverse().join("").toUpperCase();
+  
 
   const applyScale = (digitStr, scale) => {
     const s = digitStr.replace(/[^0-9]/g, "");
     let core = s.replace(/^0+/, "");
     if (core.length === 0) core = "0";
+  
 
     if (core.length <= scale) core = core.padStart(scale + 1, "0");
+  
 
     const p = core.length - scale;
     const withPoint = core.slice(0, p) + "." + core.slice(p);
     return withPoint.startsWith(".") ? "0" + withPoint : withPoint;
   };
+  
 
   let off = 4;
+  
 
   const cumulativeHex = toLEHex(bytes.slice(off, off + 4)); off += 4;
   const cumulativeStr = applyScale(cumulativeHex, 3);
+  
 
   const reverseHex = toLEHex(bytes.slice(off, off + 4)); off += 4;
   const reverseStr = applyScale(reverseHex, 3);
+  
 
   const flowHex = toLEHex(bytes.slice(off, off + 4)); off += 4;
   const flowStr = applyScale(flowHex, 4);
+  
 
   const tempHex = toLEHex(bytes.slice(off, off + 3)); off += 3;
   const tempStr = applyScale(tempHex, 2);
+  
 
   const pressureHex = toLEHex(bytes.slice(off, off + 2)); off += 2;
   const pressureStr = applyScale(pressureHex, 3);
+  
 
   const st1 = bytes[off++];
   const valveBits = st1 & 0b11;
@@ -1881,6 +2095,7 @@ function decodeUplink(input) {
                     : (valveBits === 0b10) ? "half-open"
                     : "abnormal";
   const BatteryAlarm = (st1 & 0b00000100) !== 0;
+  
 
   const st2 = bytes[off++];
   const LowBatteryAlarm    = (st2 & 0b00000001) !== 0;
@@ -1890,10 +2105,13 @@ function decodeUplink(input) {
   const OverTemperatureAlarm = (st2 & 0b00010000) !== 0;
   const EEPROMERROR        = (st2 & 0b00100000) !== 0;
   const LeakageAlarm       = (st2 & 0b01000000) !== 0;
+  
 
   const powerSupplyByte = bytes[off++];
   const PowerSupply = (powerSupplyByte === 0x00) ? "Battery" : "Connected";
+  
 
+  
 
   return {
     data: {
@@ -1916,12 +2134,16 @@ function decodeUplink(input) {
   }
 }
 ```
+  
 
 ## IQWM
+  
 
 IQWM devices are installed directly in the pipe and measure the water flow. It sends one uplink every 6 hours and has the history of water consumption in the last 12 hours.  
 If one uplink failes, the consumption can be recovered in the next uplink, since the next one will be sent after 6 hours and it contains the last 12 hours of consumption history 
+  
 
+  
 
 **Attributes:**
 batteryStatus: decimal
@@ -1943,14 +2165,18 @@ log-1-Time: "23:00 00:00" (initial and final time reading)
 ...
 log-12: decimal,
 log-12-Time: "10:00 11:00" (initial and final time reading)
+  
 
 Payload:
+  
 
 Bytes:
 FEFEBA9003006D000F00080012000600000008001D00EF001B00040007000006092211167BFE
+  
 
 Criptographic:
 /v66kAMAbQAPAAgAEgAGAAAACAAdAO8AGwAEAAcAAAYJIhEWe/4=
+  
 
 Decoded:
 ```json
@@ -2032,11 +2258,13 @@ Decoded:
     ]
 }
 ```
+  
 
 Payload Formatter (TTN):
 ```js
 function decodeUplink(input) {
   const bytes = input.bytes;
+  
 
   // Fixed sizes
   const startBytesSize = 4; // 4 bytes
@@ -2044,17 +2272,22 @@ function decodeUplink(input) {
   const meterStatusSize = 2; // 2 bytes
   const timestampSize = 4; // 4 bytes (clock format)
   const batteryStatusSize = 1; // 1 byte (last byte)
+  
 
   const fixedSize = startBytesSize + logEntriesSize + meterStatusSize + timestampSize + batteryStatusSize;
+  
 
   // Validate byte array length
   if (bytes.length <= fixedSize) {
     return { data: {}, warnings: [], errors: ["Invalid byte array length. Expected fixed size."] };
   }
+  
 
+  
 
   let hexString = bytes.map((byte) => byte.toString(16).padStart(2, '0')).join('');
   hexString = hexString.substring(4); // Remove the first 2 bytes
+  
 
   // Extract Current Reading (first 4 bytes) and convert to integer (Little Endian)
   const currentReadingHex = hexString.substring(0, 8);
@@ -2064,6 +2297,7 @@ function decodeUplink(input) {
     currentReadingHex.substring(2, 4) +
     currentReadingHex.substring(0, 2);
   const currentReading = (parseInt(currentReadingLittleEndian, 16) / 1000).toFixed(3);
+  
 
   // Extract 12 log entries (convert each to Little Endian signed 16-bit integer)
   const parameters = [];
@@ -2075,12 +2309,14 @@ function decodeUplink(input) {
     parameters.push(paramInt);
     index += 4;
   }
+  
 
   // Extract Meter Status (2 bytes) and parse flags
   const meterStatusHex = hexString.substring(index, index + 4);
   const littleEndianMeterStatus =
     meterStatusHex.substring(2, 4) + meterStatusHex.substring(0, 2);
   const meterStatus = parseInt(littleEndianMeterStatus, 16);
+  
 
   const meterStatusFlags = {};
   const firstByte = parseInt(littleEndianMeterStatus.substring(0, 2), 16);
@@ -2092,6 +2328,7 @@ function decodeUplink(input) {
   meterStatusFlags.eepromError = Boolean(firstByte & 0b00100000);
   meterStatusFlags.reserved1 = Boolean(firstByte & 0b01000000);
   meterStatusFlags.reserved2 = Boolean(firstByte & 0b10000000);
+  
 
   const secondByte = parseInt(littleEndianMeterStatus.substring(2, 4), 16);
   meterStatusFlags.leakageAlarm = Boolean(secondByte & 0b00000100);
@@ -2102,8 +2339,10 @@ function decodeUplink(input) {
   meterStatusFlags.reserved4 = Boolean(secondByte & 0b00000010);
   meterStatusFlags.reserved5 = Boolean(secondByte & 0b01000000);
   meterStatusFlags.reserved6 = Boolean(secondByte & 0b10000000);
+  
 
   index += 4;
+  
 
   // Extract Clock Time (4 bytes)
   const clockHex = hexString.substring(index, index + 8);
@@ -2116,6 +2355,7 @@ function decodeUplink(input) {
     
   const month = parseInt(clockHex.substring(2, 4), 10); // Last 2 hex digits represent minutes
   const clockDate = `${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}`;
+  
 
   
   index += 8;
@@ -2124,36 +2364,44 @@ function decodeUplink(input) {
   
 // Initialize the combined array
 var combined_time_array = [];
+  
 
 // Generate the past 12 entries
 for (let i = 0; i < 12; i++) {
   // Format the current hour and minute as HH:MM
   let currentTime = `${hrs.toString().padStart(2, '0')}:00`;
+  
 
   // Calculate the previous hour
   let previousHrs = hrs - 1;
   if (previousHrs < 0) {
     previousHrs = 23; // Handle rollover to the previous day
   }
+  
 
   // Format the previous hour and minute as HH:MM
   let previousTime = `${previousHrs.toString().padStart(2, '0')}:00`;
+  
 
   // Combine the two times and add to the array
   combined_time_array.push(`${previousTime} ${currentTime}`);
+  
 
   // Decrement the hour
   hrs -= 1;
+  
 
   // Handle rollover to the previous day
   if (hrs < 0) {
     hrs = 23;
   }
 }
+  
 
   // Extract Battery Status (1 byte, last byte of the array) and divide by 2.54
   const batteryStatusRaw = parseInt(hexString.substring(hexString.length - 2), 16);
   const batteryStatus = (batteryStatusRaw / 2.54).toFixed(2);
+  
 
   // Prepare the response
   return {
@@ -2172,6 +2420,7 @@ for (let i = 0; i < 12; i++) {
     errors: []
   };
 }
+  
 
 // Helper function to convert int16_t to signed number
 function toSignedInt16(value) {
@@ -2182,49 +2431,69 @@ function toSignedInt16(value) {
   return value; // Positive values remain unchanged
 }
 ```
+  
 
+  
 
 ## Lambdas for example
+  
 
 ### Lambda Functions
+  
 
 The Lambda functions are the **core** of the system.  
 They handle all calculations and business logic decisions.
+  
 
 # Lambda Function: `Process_iqsl`
+  
 
 ## Purpose
+  
 
 Only for Water Leak Devices of type IQSL. Doesn't include Toilet Sensors
+  
 
 ## Main Operations and Algorithms:
+  
 
 * Temperature: from Celcius to Fahrenheit
+  
 
 * Saves all connected gateways in a list and saves it in the database.
+  
 
 * Saves data in the iqwl_data table and updates the latest data in the devices_last_data table.
+  
 
 Note: Alerts are not sent by this Lambda. This Lambda sends data to another Lambda (SendAlertNotification) and that one will decide whether to send an alert.
+  
 
 ---
+  
 
 ## Input Source
+  
 
 Receives messages from the following SQS queue:  
 **`iqsl_uplink_queue`**
+  
 
 ## Output Destinations
+  
 
 - Sends data to Lambda: **`SendAlertNotification`**
 - Stores data in the following tables:
   - `devices_details`
   - `iqsl_data`
   - `devices_last_data`
+  
 
 ---
+  
 
 ## Input Format (JSON)
+  
 
 ```json
 {
@@ -2279,36 +2548,50 @@ Receives messages from the following SQS queue:
     ]
 }
 ```
+  
 
+  
 
 # Lambda Function: `Process_long_flush_iqsl`
+  
 
 ## Purpose
+  
 
 Only for Toilet Sensor Devices from type IQSL filtered by the uplinks of type LONG_FLUSH (payload_type_id = 10).
+  
 
 ## Main Operations and Algorithms:
+  
 
 ### How Does Long Flush Work?
+  
 
 The device only sends the uplink **after 3 minutes (default)** of continuous flushing.  
 In other words, when the uplink is received, the flushing has already been occurring for 3 minutes.  
 Because of that, the Lambda must register that the flush **started 3 minutes earlier**.
+  
 
 ---
+  
 
 ### End of Flush
+  
 
 When a flush ends, a different type of uplink is sent:  
 **Last Event Water Usage** (`payload_type_id = 11`).  
 However, this uplink is processed by **another Lambda**:  
 `Process_water_usage_iqsl`.
+  
 
 ---
+  
 
 ### Custom Long Flush Duration
+  
 
 The user can request the device to register a flush **only after 4 or more minutes**. In this case:
+  
 
 1. An external API (not the Lambda) stores on the device the setting that long flush should be recorded after 4+ minutes.
 2. The Lambda checks the device settings in the database.
@@ -2319,34 +2602,45 @@ The user can request the device to register a flush **only after 4 or more minut
      - The long flush is saved to the database.  
      - The property `long_event_hide_on_dashboard` is set to `False`, so it **won't appear on the Dashboard**.  
      - A **schedule is created in EventBridge** to trigger the long flush later via the `LateLongFlush` Lambda.
+  
 
 ---
+  
 
 ### Notes
+  
 
 - There is **no information** about gallons used in the flush in this uplink.  
   This data will arrive in a separate uplink of type **Last Event Water Usage** (`payload_type_id = 11`).
+  
 
 - The device is renamed with a `-flow` suffix to distinguish Toilet Sensor data from Leak Sensor data,  
   since **IQSL includes both sensor types** in the same transmitter.
 ---
+  
 
 ## Input Source
+  
 
 Receives messages from the following SQS queue:  
 **`iqsl_long_flush_uplink_queue`**
+  
 
 ## Output Destinations
+  
 
 - Sends data to Lambda: **`SendAlertToiletNotification`**, **`LateLongFlush`**
 - Stores data in the following tables:
   - `devices_details`
   - `iqsl_alerts_data`
   - `devices_last_data`
+  
 
 ---
+  
 
 ## Input Format (JSON)
+  
 
 ```json
 {
@@ -2362,50 +2656,70 @@ Receives messages from the following SQS queue:
     "frame_count": 3642
 }
 ```
+  
 
+  
 
 # Lambda Function: `Process_water_usage_iqsl`
+  
 
 ## Purpose
+  
 
 Only for Toilet Sensor Devices from type IQSL filtered by the uplinks of type WATER_USAGE (payload_type_id = 11).
+  
 
 ## Main Operations and Algorithms:
+  
 
 ### How Does Water Usage Work?
+  
 
 Gallons_spent = Pulse_total_pulses * 0.264172
+  
 
 Water usage can occur after a normal flush or after a Long Flush.
+  
 
 If it is after a normal flush, then it simply records in the database that a flush occurred without needing to calculate when the flush started. However, there can be two types:
+  
 
 - Above 1 gallon: **"normal flush"**
 - Equal to or less than 1 gallon: **"escape"** (value too low to be a real flush)
+  
 
 If it is after a Long Flush, then:
+  
 
 - If the Long Flush has already been registered, then this Water Usage must be recorded at the moment the Long Flush started. The type of this flush must be **"long"**.
 - If the Long Flush has not yet been registered on the dashboard [see late long flush], then the Long Flush should not appear on the dashboard. Instead, it should appear as a normal flush, without the need to calculate when the flush started.
+  
 
 ---
+  
 
 ## Input Source
+  
 
 Receives messages from the following SQS queue:  
 **`iqsl_water_usage_uplink_queue`**
+  
 
 ## Output Destinations
+  
 
 - Sends data to Lambda: **`SendAlertToiletNotification`**
 - Stores data in the following tables:
   - `devices_details`
   - `iqsl_alerts_data`
   - `devices_last_data`
+  
 
 ---
+  
 
 ## Input Format (JSON)
+  
 
 ```json
 {
@@ -2424,47 +2738,65 @@ Receives messages from the following SQS queue:
     "frame_count": 24465
 }
 ```
+  
 
+  
 
+  
 
 # Lambda Function: `Process_toilet_heartbeat_iqsl`
+  
 
 ## Purpose
+  
 
 Only for Toilet Sensor Devices from Type IQSL filtered by the uplinks of type HEARTBEAT (payload_type_id = 9).
+  
 
 ## Main Operations and Algorithms:
+  
 
 ### How Does the Heartbeat Work?
+  
 
 The heartbeat shows what has occurred since the last heartbeat:
+  
 
 - Number of flushes  
 - Gallons spent  
+  
 
 ---
+  
 
 **Note:**  
 If a long flush is currently happening and has not yet finished, and a heartbeat is sent,  
 then the gallons spent during this ongoing long flush are **pre-calculated**.
 ---
+  
 
 ## Input Source
+  
 
 Receives messages from the following SQS queue:  
 **`IQWLWaterLeakUplinkQueue`**
+  
 
 ## Output Destinations
+  
 
 - Sends data to Lambda: **`iqsl_toilet_heartbeat_uplink_queue`**
 - Stores data in the following tables:
   - `devices_details`
   - `iqsl_alerts_data`
   - `devices_last_data`
+  
 
 ---
+  
 
 ## Input Format (JSON)
+  
 
 ```json
 {
@@ -2484,54 +2816,74 @@ Receives messages from the following SQS queue:
     "frame_count": 325
 }
 ```
+  
 
+  
 
 # Lambda Function: `Process_alerts_iqsl`
+  
 
 ## Purpose
+  
 
 Only for Leak Sensor and Toilet Sensor Devices of type IQSL filtered by the uplinks of payload_type_id = 1,2,3,4,5,6,7,8 and 12.
+  
 
 ## Main Operations and Algorithms:
+  
 
 ### Processing Based on `payload_type_id`
+  
 
 Depending on the `payload_type_id`, the processing is different:
+  
 
 - **payload_type_id = 1** → Leak Detected External (LEAK SENSOR)  
   Saves the event and calls the Lambda **SendAlertNotification** to send an alert.
+  
 
 - **payload_type_id = 2** → Leak Detected Local (LEAK SENSOR)  
   Saves the event and calls the Lambda **SendAlertNotification** to send an alert.
+  
 
 - **payload_type_id = 3** → Tamper (LEAK SENSOR)  
   Saves the event. This uplink is sent when the device comes into contact with the magnet (not actual movement).
+  
 
 - **payload_type_id = 4** → Button Pressed (LEAK SENSOR)  
   Saves the event.
+  
 
 - **payload_type_id = 5** → High Temperature (LEAK SENSOR)  
   Saves the event and calls the Lambda **SendAlertNotification** to send an alert.
+  
 
 - **payload_type_id = 6** → Low Temperature (LEAK SENSOR)  
   Saves the event and calls the Lambda **SendAlertNotification** to send an alert.
+  
 
 - **payload_type_id = 7** → High Humidity (LEAK SENSOR)  
   Saves the event and calls the Lambda **SendAlertNotification** to send an alert.
+  
 
 - **payload_type_id = 8** → Low Humidity (LEAK SENSOR)  
   Saves the event and calls the Lambda **SendAlertNotification** to send an alert.
+  
 
 - **payload_type_id = 12** → Headphone Jack Alert (LEAK SENSOR)  
   Saves the event.
 ---
+  
 
 ## Input Source
+  
 
 Receives messages from the following SQS queue:  
 **`iqsl_alerts_uplink_queue`**
+  
 
 ## Output Destinations
+  
 
 - Sends data to Lambda: **`SendAlertNotification`**, **`SendAlertToiletNotification`**
 - Stores data in the following tables:
@@ -2539,10 +2891,13 @@ Receives messages from the following SQS queue:
   - `iqsl_data`
   - `iqsl_alerts_data`
   - `devices_last_data`
+  
 
 ---
+  
 
 ## Input Format (JSON) - example only for payload_type_id = 2
+  
 
 ```json
 {
@@ -2562,11 +2917,15 @@ Receives messages from the following SQS queue:
     "frame_count": 2789
 }
 ```
+  
 
 ## Downlinks
+  
 
 Tip: use this site to facilitate the convert from base to hex [base64-to-hex](https://cryptii.com/pipes/base64-to-hex)
+  
 
+  
 
 ### Working on...
 Downlinks
