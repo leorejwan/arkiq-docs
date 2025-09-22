@@ -193,21 +193,46 @@ function decodeUplink(input) {
 ### IQWL Dual Chip
 
 Some IQWL has dual chip:  
-1. Lorawan  
-2. Sidewalk  
+1. LoRaWAN  
+2. Amazon Sidewalk  
 
-By default, when it's turned ON, it will try to connect to Lorawan.  
+By default, when it's turned ON, it will try to connect to LoRaWAN.  
 
-If after 3 attempts, it doesn't connect to Lorawan, it will connect to AMAZON Sidewalk.  
+If after 3 attempts, it doesn't connect to LoRaWAN, it will connect to Amazon Sidewalk.  
 
-#### What are the difference between IQWL chip Lorawan and IQWL chip Sidewalk
+#### What are the difference between IQWL chip LoRaWAN and IQWL chip Sidewalk
 
-* Lorawan needs to be connected to a network and be cover by a LoRaWAN gateway. Sidewalk doesn't need Gateways.
+* LoRaWAN needs to be connected to a network and be cover by a LoRaWAN gateway. Sidewalk doesn't need Gateways.
 * Sidewalk uses the devices from Amazon to spread the connection
 * Sidewalk nowadays (year 2025) only work in United States, but soon it will be active to other countries as well ([coverage.sidewalk.amazon](https://coverage.sidewalk.amazon/))
 
-**In September 2025, the Sidewalk devices are not in arkIQ cloud. It's in another cloud. The uplinks are forwarded via a Lambda that is connected to an AWS IoT Core Rule from the other AWS Account. We are working to bring all the Sidewalk chips to our cloud**
+**In September 2025, the Sidewalk devices are not in arkIQ cloud. It's in another cloud. The uplinks are forwarded via a Lambda that is connected to an AWS IoT Core Rule from the other AWS Account. We are working on it to bring all the Sidewalk chips to our cloud**
 
+The Lambda that receives the messages from Amazon Sidewalk is called ReceiveUplinkBrowanSidewalkLambda. This is the payload structure of every payload:
+
+```json
+{
+    "MessageId": "48a0c3cb-7dc6-4e03-b738-9f3565808bd0",
+    "WirelessDeviceId": "cda427e6-1f7c-45bb-aeb2-7324852a191f",
+    "PayloadData": "N2UwMDBmY2YwMDQw",
+    "WirelessMetadata": {
+        "Sidewalk": {
+            "CmdExStatus": "COMMAND_EXEC_STATUS_UNSPECIFIED",
+            "MessageType": "CUSTOM_COMMAND_ID_NOTIFY",
+            "NackExStatus": [],
+            "Seq": 20,
+            "SidewalkId": "B659A2463A",
+            "Timestamp": "2025-09-22T14: 47: 18.911Z"
+        }
+    }
+}
+```
+
+This payoload doesn't contain the DEVEUI or the Serial Number of the device. Rather, it contains the **WirelessDeviceId**
+To assign which device is related to this particular uplink, the **WirelessDeviceId** need to be used.   
+There is a table in the database that contains the **serial-number WirelessDeviceId** relationship: **iqwl_sidewalk_deviceid_connector**  
+
+**In the future, when all Amazon Sidewalk chips will be onboarded on our cloud, then we'll implement a more efficient and less manual way to assign the devices with the uplinks.**
 
 
 ### IQSL
@@ -1244,8 +1269,919 @@ var Int16 = function (value) {
 };
 ```
 
-## 
+## IQSV
 
+IQSV devices are installed directly in the pipe and measure the water flow, temperature, pressure and contain a valve that can open and close the flow.
+
+**There are 2 types of IQSV**
+
+* IQSV V1 and V2 (older ones - until Sep/2025):
+
+**Attributes:**
+BatteryAlarm: bool  
+BurstAlarm: bool (when pipe is damaged)  
+CumulativeConsumption: decimal (water flow since the moment the device is turned ON) -> * 264.172052 = value in gallons
+EEPROMERROR: bool (no idea what is it)  
+EmptyPipeAlarm: bool (when no flow)  
+InstantConsumption: decimal (water flow in this moment PER HOUR) -> * 264.172052 = value in gallons
+LeakageAlarm: bool (when there is a leak in the device/pipe)
+LowBatteryAlarm: bool (when the battery is low)
+OverRangeAlarm: bool (no idea what is it)
+OverTemperatureAlarm: bool (temperature defined in the firmware)
+PreviousDayConsumption: decimal (water flow yesterday)  -> * 264.172052 = value in gallons
+ReverseCumulativeConsumption: decimal (if there is a flow in reverse) ->  * 264.172052 = value in gallons
+ReverseFlowAlarm: bool (when reverse flow)
+ValveStatus: open/close
+WaterPressure: decimal (in MPA) -> * 145.038 to convert to PSI
+WaterTemperature: decimal (in Celsius) -> Need to convert to °F
+
+Payload:
+
+Bytes:
+FEFE68201335465201740081259090002B612461002B812155002B000000003500000000652300810248091122092520000013161F…
+
+Criptographic:
+/v5oIBM1RlIBdACBJZCQACthJGEAK4EhVQArAAAAADUAAAAAZSMAgQJICREiCSUgAAATFh8=
+
+Decoded:
+```json
+{
+    "BatteryAlarm": false,
+    "BurstAlarm": false,
+    "CumulativeConsumption": "612.461",
+    "EEPROMERROR": false,
+    "EmptyPipeAlarm": false,
+    "InstantConsumption": "0.0000",
+    "LeakageAlarm": false,
+    "LowBatteryAlarm": false,
+    "OverRangeAlarm": false,
+    "OverTemperatureAlarm": false,
+    "PreviousDayConsumption": "552.181",
+    "ReverseCumulativeConsumption": "0.000",
+    "ReverseFlowAlarm": false,
+    "ValveStatus": "open",
+    "WaterPressure": "0.281",
+    "WaterTemperature": "23.65"
+}
+```
+
+Payload Formatter (TTN):
+```js
+function decodeUplink(input)
+{
+	var bytes = input.bytes;
+	
+    var bitst1, bitst1L, bitt, bittL, Bat, Battery, Code, Len, ID, Count, Unit, decimals, raw, output, Data1, Data2, Data3, Data4, Data5, Data6, Data7, Status, Err, Concat, Concat1, Concat2, Concat3, Concat4, Concat5, Concat6;
+    var st1error5, st1error4, st1error3, st1error2, error7, error6, error5, error4, error3, error2, error1, error0;
+    var Downlink;
+    var interval, inte_unit;
+    var deff = "null";
+
+    //METER SN DECODE
+    if (bytes[0] == "131")
+    {
+        //control code
+        if (bytes[0] == "131") { Code = bytes[0].toString(16); }
+
+        //data length
+        if (bytes[1] == "10") { Len = "Length of the Data Frame : " + bytes[1]; }
+
+        //data identification for meter SN uplink
+        if (bytes[2] == "129" & bytes[3] == "10") { ID = "Read Meter Serial Number"; }
+
+        //uplink data counter
+        Count = "Uplink Data Counter : " + bytes[4];
+
+        //meter SN indicator
+        Data1 = bytes[5];
+        Data2 = bytes[6];
+        Data3 = bytes[7];
+        Data4 = bytes[8];
+        Data5 = bytes[9];
+        Data6 = bytes[10];
+        Data7 = bytes[11];
+        if (Data1 < 10) { Data1 = '0' + Data1.toString(16); } else { Data1 = Data1.toString(16); }
+        if (Data2 < 10) { Data2 = '0' + Data2.toString(16); } else { Data2 = Data2.toString(16); }
+        if (Data3 < 10) { Data3 = '0' + Data3.toString(16); } else { Data3 = Data3.toString(16); }
+        if (Data4 < 10) { Data4 = '0' + Data4.toString(16); } else { Data4 = Data4.toString(16); }
+        if (Data5 < 10) { Data5 = '0' + Data5.toString(16); } else { Data5 = Data5.toString(16); }
+        if (Data6 < 10) { Data6 = '0' + Data6.toString(16); } else { Data6 = Data6.toString(16); }
+        if (Data7 < 10) { Data7 = '0' + Data7.toString(16); } else { Data7 = Data7.toString(16); }
+        Concat1 = Data7.concat(Data6);
+        Concat2 = Data5.concat(Data4);
+        Concat3 = Data3.concat(Data2);
+        Concat4 = Concat1.concat(Concat2);
+        Concat5 = Concat3.concat(Data1);
+        Concat = Concat4.concat(Concat5);
+
+        return {
+        Command_Code: Code,
+                Data_Length: Len,
+                Data_Type: ID,
+                Count: Count,
+                Meter_Addr: Concat
+        };
+    }
+
+    //METER TOTALIZER DECODE
+    else if (bytes[0] == 0x81)
+    {
+        console.log(bytes[0])
+        //control code
+        if (bytes[0] == 0x81) { Code = bytes[0].toString(16); }
+
+        //data length(not include battery indicator byte)
+        if (bytes[1] == 0x0A) { Len = "Length of the Data Frame : " + bytes[1]; }
+
+        //data identification for totalizer uplink
+        if (bytes[2] == 0x144 & bytes[3] == 0x31) { ID = "Read Meter Cumulative Value"; }
+
+        //uplink data counter
+        Count = "Uplink Data Counter : " + bytes[4];
+
+        //decimals
+        if (bytes[5] == 0x2B) { Unit = "Cubic Meter"; decimals = 1000; }
+        else if (bytes[5] == 0x2C) { Unit = "Cubic Meter"; decimals = 100; }
+
+        //totalizer
+        a = bytes[6];
+        b = bytes[7];
+        c = bytes[8];
+        d = bytes[9];
+        if (a < 0x10) { a = '0' + a.toString(16); } else { a = a.toString(16); }
+        if (b < 0x10) { b = '0' + b.toString(16); } else { b = b.toString(16); }
+        if (c < 0x10) { c = '0' + c.toString(16); } else { c = c.toString(16); }
+        if (d < 0x10) { d = '0' + d.toString(16); } else { d = d.toString(16); }
+        concat1 = d.concat(c);
+        concat2 = b.concat(a);
+        raw = concat1.concat(concat2);
+        output = raw / decimals;
+
+
+        //valve indicator
+        if (bytes[10] == 0x01) { Status = "Valve Control : Available"; } else { Status = "Valve Control : Not Available"; }
+
+        //error bits ST1
+        bitst1 = bytes[10];
+        bitst1 = bitst1.toString(2);
+        bitst1 = ('000000000' + bitst1).slice(-8);
+        if (bitst1[5] == "1") { st1error5 = "Leakage Alert, "; } else { st1error5 = ""; }
+        if (bitst1[4] == "1") { st1error4 = "Burst Alert, "; } else { st1error4 = ""; }
+        if (bitst1[3] == "1") { st1error3 = "Tamper Alert, "; } else { st1error3 = ""; }
+        if (bitst1[2] == "1") { st1error2 = "Freezing Alert, "; } else { st1error2 = ""; }
+        bitst1L = st1error5 + st1error4 + st1error3 + st1error2;
+        bitst1L = bitst1L.substr(0, bitst1L.length - 2);
+        if (bitst1L.length == 0) { bitst1L = "No st1error"; }
+        //if (bytes[11] == "8") { Err = "Transducer Outlet Error"; }
+        //if (bytes[11] == "7") { Err = "Transducer Inlet Error"; }
+        //if (bytes[11] == "6") { Err = "EEPROM Error"; }
+        //if (bytes[11] == "5") { Err = "Temperature Alert"; }
+        //if (bytes[11] == "4") { Err = "Over Range/Flow Alert"; }
+        //if (bytes[11] == "3") { Err = "Reverse Flow Alert"; }
+        //if (bytes[11] == "2") { Err = "Empty Pipe Alert"; }
+        //if (bytes[11] == "1") { Err = "Battery Alert"; }
+        //if (bytes[11] == "0") { Err = "No Error"; }
+
+
+        //error bits ST2
+        bitt = bytes[11];
+        bitt = bitt.toString(2);
+        bitt = ('000000000' + bitt).slice(-8);
+        if (bitt[7] == "1") { error7 = "Battery Alert, "; } else { error7 = ""; }
+        if (bitt[6] == "1") { error6 = "Empty Pipe Alert, "; } else { error6 = ""; }
+        if (bitt[5] == "1") { error5 = "Reverse Flow Alert, "; } else { error5 = ""; }
+        if (bitt[4] == "1") { error4 = "Over Range/Flow Alert, "; } else { error4 = ""; }
+        if (bitt[3] == "1") { error3 = "Temperature Alert, "; } else { error3 = ""; }
+        if (bitt[2] == "1") { error2 = "EEPROM Error, "; } else { error2 = ""; }
+        if (bitt[1] == "1") { error1 = "Transducer Inlet Error, "; } else { error1 = ""; }
+        if (bitt[0] == "1") { error0 = "Transducer Outlet Error, "; } else { error0 = ""; }
+        bittL = error7 + error6 + error5 + error4 + error3 + error2 + error1 + error0;
+        bittL = bittL.substr(0, bittL.length - 2);
+        if (bittL.length == 0) { bittL = "No Error"; }
+        //if (bytes[11] == "8") { Err = "Transducer Outlet Error"; }
+        //if (bytes[11] == "7") { Err = "Transducer Inlet Error"; }
+        //if (bytes[11] == "6") { Err = "EEPROM Error"; }
+        //if (bytes[11] == "5") { Err = "Temperature Alert"; }
+        //if (bytes[11] == "4") { Err = "Over Range/Flow Alert"; }
+        //if (bytes[11] == "3") { Err = "Reverse Flow Alert"; }
+        //if (bytes[11] == "2") { Err = "Empty Pipe Alert"; }
+        //if (bytes[11] == "1") { Err = "Battery Alert"; }
+        //if (bytes[11] == "0") { Err = "No Error"; }
+
+        //battery indicator
+        Bat = (bytes[12] - 1) / 253;
+        Battery = (Bat * 100).toFixed(2);
+        return {
+        Command_Code: Code,
+                Data_Length: Len,
+                Data_Type: ID,
+                Count: Count,
+                Unit: Unit,
+                Water_Flow_in_Cubic_Meter: output,
+                Valve_Status: Status,
+                Error_Status_ST2: bittL,
+                Error_Status_ST1: bitst1L,
+                Battery: Battery,
+                Raw_Data: raw
+                };
+    }
+
+    //SENDING INTERVAL DECODE
+    else if (bytes[0] == "34")
+    {
+        //control code
+        if (bytes[0] == "34") { Code = bytes[0].toString(16); }
+        ID = "Modify Meter Uplink Interval";
+
+
+        //data length(not include battery indicator byte)
+        if (bytes[1] == "10") { Len = "Length of the Data Frame : " + bytes[1]; }
+
+        //interval
+        a = bytes[5].toString(16);
+        b = bytes[6].toString(16);
+        concat2 = b.concat(a);
+        interval = parseInt(concat2, 16);
+        inte_unit = "minutes";
+
+        return {
+        Command_Code: Code,
+                Data_Length: Len,
+                Data_Type: ID,
+                Uplink_Interval: interval,
+                Interval_Unit: inte_unit
+                };
+    }
+
+    else if(bytes[0] == "81"){
+
+        if (bytes.substring(10, 12) == "2B") 
+        { 
+            Unit = "Cubic Meter"; 
+            decimals = 1000; 
+        }
+        var unit = Unit;
+
+        a = bytes.substring(12, 14);
+        b = bytes.substring(14, 16);
+        c = bytes.substring(16, 18);
+        d = bytes.substring(18, 20);
+
+        a = a.toString(10);
+        b = b.toString(10);
+        c = c.toString(10);
+        d = d.toString(10);
+
+        concat1 = d.concat(c);
+        concat2 = b.concat(a);
+        raw = concat1.concat(concat2);
+        var waterFlowInCubicMeter = raw / decimals;
+
+        console.log(bytes.substring(24, 26).toString(10))
+
+        Bat = (bytes.substring(24, 26).toString(10) - 1) / 253;
+        Battery = (Bat * 100).toFixed(2);
+        var battery = Battery; 
+
+        return {
+            data: {
+                Unit: unit,
+                WaterFlowInCubicMeter: waterFlowInCubicMeter,
+                Battery: battery
+            },
+            };
+    }
+
+    else if(bytes[0].toString(16) == "fe"){
+        
+        //Cumulative Consumption
+        var unitCumulativeConsuption = bytes[16];
+        var base16UCC = unitCumulativeConsuption.toString(16)
+        var doubleUCC = 0.001
+        var decimalsToFixed = 3;
+        if(base16UCC == "2b"){
+            doubleUCC = 0.001
+            decimalsToFixed = 3
+        }
+        else if(base16UCC == "2c"){
+            doubleUCC = 0.01
+            decimalsToFixed = 2
+        }
+        else if(base16UCC == "2e"){
+            doubleUCC = 1
+            decimalsToFixed = 0
+        }
+        else if(base16UCC == "35"){
+            doubleUCC = 0.0001
+            decimalsToFixed = 4
+        }
+
+        var cumulativeConsuption1 = bytes[20];
+        var cumulativeConsuption2 = bytes[19];
+        var cumulativeConsuption3 = bytes[18];
+        var cumulativeConsuption4 = bytes[17];
+
+        var base16CC1 = cumulativeConsuption1.toString(16).padStart(2, '0');
+        var base16CC2 = cumulativeConsuption2.toString(16).padStart(2, '0');
+        var base16CC3 = cumulativeConsuption3.toString(16).padStart(2, '0');
+        var base16CC4 = cumulativeConsuption4.toString(16).padStart(2, '0');
+
+        var base16CC = base16CC1 + base16CC2 + base16CC3 + base16CC4
+        var floatCC = parseFloat(base16CC)
+        var realCumulativeConsumption = (floatCC * doubleUCC).toFixed(decimalsToFixed)
+
+        //Previous day Consumption
+        var unitPreviousDayConsuption = bytes[21];
+        var base16UPDC = unitPreviousDayConsuption.toString(16)
+        var doubleUDPC = 0.001
+        if(base16UPDC == "2b"){
+            doubleUDPC = 0.001
+            decimalsToFixed = 3
+        }
+        else if(base16UPDC == "2c"){
+            doubleUDPC = 0.01
+            decimalsToFixed = 2
+        }
+        else if(base16UPDC == "2e"){
+            doubleUDPC = 1
+            decimalsToFixed = 0
+        }
+        else if(base16UPDC == "35"){
+            doubleUDPC = 0.0001
+            decimalsToFixed = 4
+        }
+
+
+        var prevDayConsuption1 = bytes[25];
+        var prevDayConsuption2 = bytes[24];
+        var prevDayConsuption3 = bytes[23];
+        var prevDayConsuption4 = bytes[22];
+
+        var base16PDC1 = prevDayConsuption1.toString(16).padStart(2, '0');
+        var base16PDC2 = prevDayConsuption2.toString(16).padStart(2, '0');
+        var base16PDC3 = prevDayConsuption3.toString(16).padStart(2, '0');
+        var base16PDC4 = prevDayConsuption4.toString(16).padStart(2, '0');
+
+        var base16PDC = base16PDC1 + base16PDC2 + base16PDC3 + base16PDC4
+        var floatPDC = parseFloat(base16PDC)
+        var realPrevDayConsumption = (floatPDC * doubleUDPC).toFixed(decimalsToFixed)
+
+        //Reverse Cumulative Consumption
+        var unitReverseCumulativeConsumption = bytes[26];
+        var base16URCC = unitReverseCumulativeConsumption.toString(16)
+        var doubleURCC = 0.001
+        if(base16URCC == "2b"){
+            doubleURCC = 0.001
+            decimalsToFixed = 3
+        }
+        else if(base16URCC == "2c"){
+            doubleURCC = 0.01
+            decimalsToFixed = 2
+        }
+        else if(base16URCC == "2e"){
+            doubleURCC = 1
+            decimalsToFixed = 0
+        }
+        else if(base16URCC == "35"){
+            doubleURCC = 0.0001
+            decimalsToFixed = 4
+        }
+
+        var reverseCumulativeConsumption1 = bytes[30];
+        var reverseCumulativeConsumption2 = bytes[29];
+        var reverseCumulativeConsumption3 = bytes[28];
+        var reverseCumulativeConsumption4 = bytes[27];
+
+        var base16RCC1 = reverseCumulativeConsumption1.toString(16).padStart(2, '0');
+        var base16RCC2 = reverseCumulativeConsumption2.toString(16).padStart(2, '0');
+        var base16RCC3 = reverseCumulativeConsumption3.toString(16).padStart(2, '0');
+        var base16RCC4 = reverseCumulativeConsumption4.toString(16).padStart(2, '0');
+
+        var base16RCC = base16RCC1 + base16RCC2 + base16RCC3 + base16RCC4
+        var floatRCC = parseFloat(base16RCC)
+        var realReverseCumulativeConsumption = (floatRCC * doubleURCC).toFixed(decimalsToFixed)
+
+        //Instant Consumption
+        var unitInstantConsumption = bytes[31];
+        var base16UIC = unitInstantConsumption.toString(16)
+        var doubleUIC = 0.001
+        if(base16UIC == "2b"){
+            doubleUIC = 0.001
+            decimalsToFixed = 3
+        }
+        else if(base16UIC == "2c"){
+            doubleUIC = 0.01
+            decimalsToFixed = 2
+        }
+        else if(base16UIC == "2e"){
+            doubleUIC = 1
+            decimalsToFixed = 0
+        }
+        else if(base16UIC == "35"){
+            doubleUIC = 0.0001
+            decimalsToFixed = 4
+        }
+
+        var instanceConsumption1 = bytes[35];
+        var instanceConsumption2 = bytes[34];
+        var instanceConsumption3 = bytes[33];
+        var instanceConsumption4 = bytes[32];
+
+        var base16IC1 = instanceConsumption1.toString(16).padStart(2, '0');
+        var base16IC2 = instanceConsumption2.toString(16).padStart(2, '0');
+        var base16IC3 = instanceConsumption3.toString(16).padStart(2, '0');
+        var base16IC4 = instanceConsumption4.toString(16).padStart(2, '0');
+
+        var base16IC = base16IC1 + base16IC2 + base16IC3 + base16IC4
+        var floatIC = parseFloat(base16IC)
+        var realInstantConsumption = (floatIC * doubleUIC).toFixed(decimalsToFixed)
+
+        //Water Temperature
+        var waterTemperature1 = bytes[38];
+        var waterTemperature2 = bytes[37];
+        var waterTemperature3 = bytes[36];
+
+        var base16WT1 = waterTemperature1.toString(16).padStart(2, '0');
+        var base16WT2 = waterTemperature2.toString(16).padStart(2, '0');
+        var base16WT3 = waterTemperature3.toString(16).padStart(2, '0');
+
+        var base16WT = base16WT1 + base16WT2 + base16WT3
+        var floatWT = parseFloat(base16WT)
+        var realWaterTemperature = (floatWT * 0.01).toFixed(2)
+
+        //Water Pressure
+        var waterPressure1 = bytes[40];
+        var waterPressure2 = bytes[39];
+
+        var base16WP1 = waterPressure1.toString(16).padStart(2, '0');
+        var base16WP2 = waterPressure2.toString(16).padStart(2, '0');
+
+        var base16WP = base16WP1 + base16WP2
+        var floatWP = parseFloat(base16WP)
+        var realWaterPressure = (floatWP * 0.001).toFixed(3)
+
+
+        var ST1 = bytes[48];
+        var ST1Binary = ST1.toString(2).padStart(8, '0');
+
+        valveStatusBinary = ST1Binary.substring(6)
+        var valveStatus = "open"
+        if(valveStatusBinary == "00"){
+            valveStatus = "open"
+        } else if(valveStatusBinary == "01"){
+            valveStatus = "close"
+        } else if(valveStatusBinary == "11"){
+            valveStatus = "abnormal"
+        }
+
+        var batteryAlarmBinary = ST1Binary.substring(5, 6)
+        var batteryAlarm = batteryAlarmBinary == "0" ? false : true
+
+        var ST2 = bytes[49];
+        var ST2Binary = ST2.toString(2).padStart(8, '0');
+
+        var lowBatteryAlarmBinary = ST2Binary.substring(7)
+        var lowBatteryAlarm = lowBatteryAlarmBinary == "0" ? false : true
+
+        var emptyPipeAlarmBinary = ST2Binary.substring(6,7)
+        var emptyPipeAlarm = emptyPipeAlarmBinary == "0" ? false : true
+
+        var reverseFlowAlarmBinary = ST2Binary.substring(5,6)
+        var reverseFlowAlarm = reverseFlowAlarmBinary == "0" ? false : true
+
+        var overRangeAlarmBinary = ST2Binary.substring(4,5)
+        var overRangeAlarm = overRangeAlarmBinary == "0" ? false : true
+
+        var overTemperatureAlarmBinary = ST2Binary.substring(3,4)
+        var overTemperatureAlarm = overTemperatureAlarmBinary == "0" ? false : true
+
+        var EEPROMErrorBinary = ST2Binary.substring(2,3)
+        var EEPROMError = EEPROMErrorBinary == "0" ? false : true
+
+        var leakageAlarmBinary = ST2Binary.substring(1,2)
+        var leakageAlarm = leakageAlarmBinary == "0" ? false : true
+
+        var burstAlarmBinary = ST2Binary.substring(0,1)
+        var burstAlarm = burstAlarmBinary == "0" ? false : true
+
+        return {
+            data: {
+                CumulativeConsumption: realCumulativeConsumption,
+                PreviousDayConsumption: realPrevDayConsumption,
+                ReverseCumulativeConsumption: realReverseCumulativeConsumption,
+                InstantConsumption: realInstantConsumption,
+                WaterTemperature: realWaterTemperature,
+                WaterPressure: realWaterPressure,
+                ValveStatus: valveStatus,
+                BatteryAlarm: batteryAlarm,
+                LowBatteryAlarm: lowBatteryAlarm,
+                EmptyPipeAlarm: emptyPipeAlarm,
+                ReverseFlowAlarm: reverseFlowAlarm,
+                OverRangeAlarm: overRangeAlarm,
+                OverTemperatureAlarm: overTemperatureAlarm,
+                EEPROMERROR: EEPROMError,
+                LeakageAlarm: leakageAlarm,
+                BurstAlarm: burstAlarm
+            },
+        };
+    }
+}
+```
+
+* IQSV DC and BP (new ones - from Sep/2025):
+
+**Attributes:**
+BatteryAlarm: bool  
+CumulativeConsumption: decimal (water flow since the moment the device is turned ON) -> * 264.172052 = value in gallons
+EEPROMERROR: bool (no idea what is it)  
+EmptyPipeAlarm: bool (when no flow)  
+InstantConsumption: decimal (water flow in this moment PER HOUR) -> * 264.172052 = value in gallons
+LeakageAlarm: bool (when there is a leak in the device/pipe)
+LowBatteryAlarm: bool (when the battery is low)
+OverRangeAlarm: bool (no idea what is it)
+OverTemperatureAlarm: bool (temperature defined in the firmware)
+PreviousDayConsumption: decimal (water flow yesterday)  -> * 264.172052 = value in gallons
+ReverseCumulativeConsumption: decimal (if there is a flow in reverse) ->  * 264.172052 = value in gallons
+ReverseFlowAlarm: bool (when reverse flow)
+ValveStatus: open/close/ **half-open (25%, 50% or 75%)**
+WaterPressure: decimal (in MPA) -> * 145.038 to convert to PSI
+WaterTemperature: decimal (in Celsius) -> Need to convert to °F
+**PowerSupply: Battery/External Power Supply**
+
+Payload:
+
+Bytes:
+FEFE68100000000000000000000000002324000000000200C11615
+
+Criptographic:
+/v5oEAAAAAAAAAAAAAAAACMkAAAAAAIAwRYV
+
+Decoded:
+```json
+{
+    "BatteryAlarm": false,
+    "BurstAlarm": false,
+    "CumulativeConsumption": "612.461",
+    "EEPROMERROR": false,
+    "EmptyPipeAlarm": false,
+    "InstantConsumption": "0.0000",
+    "LeakageAlarm": false,
+    "LowBatteryAlarm": false,
+    "OverRangeAlarm": false,
+    "OverTemperatureAlarm": false,
+    "PreviousDayConsumption": "552.181",
+    "ReverseCumulativeConsumption": "0.000",
+    "ReverseFlowAlarm": false,
+    "ValveStatus": "open",
+    "WaterPressure": "0.281",
+    "WaterTemperature": "23.65"
+}
+```
+
+Payload Formatter (TTN):
+```js
+function decodeUplink(input) {
+  const bytes = input.bytes;
+  const toLEHex = (arr) =>
+    arr.map(b => b.toString(16).padStart(2, "0")).reverse().join("").toUpperCase();
+
+  const applyScale = (digitStr, scale) => {
+    const s = digitStr.replace(/[^0-9]/g, "");
+    let core = s.replace(/^0+/, "");
+    if (core.length === 0) core = "0";
+
+    if (core.length <= scale) core = core.padStart(scale + 1, "0");
+
+    const p = core.length - scale;
+    const withPoint = core.slice(0, p) + "." + core.slice(p);
+    return withPoint.startsWith(".") ? "0" + withPoint : withPoint;
+  };
+
+  let off = 4;
+
+  const cumulativeHex = toLEHex(bytes.slice(off, off + 4)); off += 4;
+  const cumulativeStr = applyScale(cumulativeHex, 3);
+
+  const reverseHex = toLEHex(bytes.slice(off, off + 4)); off += 4;
+  const reverseStr = applyScale(reverseHex, 3);
+
+  const flowHex = toLEHex(bytes.slice(off, off + 4)); off += 4;
+  const flowStr = applyScale(flowHex, 4);
+
+  const tempHex = toLEHex(bytes.slice(off, off + 3)); off += 3;
+  const tempStr = applyScale(tempHex, 2);
+
+  const pressureHex = toLEHex(bytes.slice(off, off + 2)); off += 2;
+  const pressureStr = applyScale(pressureHex, 3);
+
+  const st1 = bytes[off++];
+  const valveBits = st1 & 0b11;
+  const ValveStatus = (valveBits === 0b00) ? "open"
+                    : (valveBits === 0b01) ? "close"
+                    : (valveBits === 0b10) ? "half-open"
+                    : "abnormal";
+  const BatteryAlarm = (st1 & 0b00000100) !== 0;
+
+  const st2 = bytes[off++];
+  const LowBatteryAlarm    = (st2 & 0b00000001) !== 0;
+  const EmptyPipeAlarm     = (st2 & 0b00000010) !== 0;
+  const ReverseFlowAlarm   = (st2 & 0b00000100) !== 0;
+  const OverRangeAlarm     = (st2 & 0b00001000) !== 0;
+  const OverTemperatureAlarm = (st2 & 0b00010000) !== 0;
+  const EEPROMERROR        = (st2 & 0b00100000) !== 0;
+  const LeakageAlarm       = (st2 & 0b01000000) !== 0;
+
+  const powerSupplyByte = bytes[off++];
+  const PowerSupply = (powerSupplyByte === 0x00) ? "Battery" : "Connected";
+
+
+  return {
+    data: {
+      CumulativeConsumption: cumulativeStr,         
+      ReverseCumulativeConsumption: reverseStr,
+      InstantConsumption: flowStr,
+      WaterTemperature: tempStr,
+      WaterPressure: pressureStr,
+      LowBatteryAlarm,
+      EmptyPipeAlarm,
+      ReverseFlowAlarm,
+      OverRangeAlarm,
+      OverTemperatureAlarm,
+      EEPROMERROR,
+      LeakageAlarm,
+      ValveStatus,
+      BatteryAlarm,
+      PowerSupply
+    }
+  }
+}
+```
+
+## IQWM
+
+IQWM devices are installed directly in the pipe and measure the water flow. It sends one uplink every 6 hours and has the history of water consumption in the last 12 hours.  
+If one uplink failes, the consumption can be recovered in the next uplink, since the next one will be sent after 6 hours and it contains the last 12 hours of consumption history 
+
+
+**Attributes:**
+batteryStatus: decimal
+clockDate: 09/22 (date - example: Sep 22th)
+clockTime: 11:16 (time - example 11h16m)
+currentReading: decimal (water flow since the moment the device is turned ON) -> * 264.172052 = value in gallons
+burstAlarm: bool (same as IQSV)
+eepromError: bool (same as IQSV)
+emptyPipeAlarm: bool (same as IQSV)
+freezingAlarm: bool (when freezed)
+leakageAlarm: bool (same as IQSV)
+lowBatteryAlarm: bool (same as IQSV)
+overRangeAlarm: bool  (same as IQSV)
+overTemperatureAlarm: bool  (same as IQSV)
+reverseFlowAlarm: bool  (same as IQSV)
+tamperAlarm: bool (when moved) 
+log-1: decimal (* 264.172052 = consumption gallons)
+log-1-Time: "23:00 00:00" (initial and final time reading)
+...
+log-12: decimal,
+log-12-Time: "10:00 11:00" (initial and final time reading)
+
+Payload:
+
+Bytes:
+FEFEBA9003006D000F00080012000600000008001D00EF001B00040007000006092211167BFE
+
+Criptographic:
+/v66kAMAbQAPAAgAEgAGAAAACAAdAO8AGwAEAAcAAAYJIhEWe/4=
+
+Decoded:
+```json
+{
+    "batteryStatus": 100,
+    "clockDate": "09/22",
+    "clockTime": "11:16",
+    "currentReading": 233.658,
+    "meterStatus": {
+      "flags": {
+        "burstAlarm": false,
+        "eepromError": false,
+        "emptyPipeAlarm": true,
+        "freezingAlarm": false,
+        "leakageAlarm": false,
+        "lowBatteryAlarm": false,
+        "overRangeAlarm": false,
+        "overTemperatureAlarm": false,
+        "reserved1": false,
+        "reserved2": false,
+        "reserved3": false,
+        "reserved4": false,
+        "reserved5": false,
+        "reserved6": false,
+        "reverseFlowAlarm": true,
+        "tamperAlarm": false
+      },
+      "raw": 1536
+    },
+    "parameters": [
+      {
+        "log-1": 0.109,
+        "log-1-Time": "23:00 00:00"
+      },
+      {
+        "log-2": 0.015,
+        "log-2-Time": "00:00 01:00"
+      },
+      {
+        "log-3": 0.008,
+        "log-3-Time": "01:00 02:00"
+      },
+      {
+        "log-4": 0.018,
+        "log-4-Time": "02:00 03:00"
+      },
+      {
+        "log-5": 0.006,
+        "log-5-Time": "03:00 04:00"
+      },
+      {
+        "log-6": 0,
+        "log-6-Time": "04:00 05:00"
+      },
+      {
+        "log-7": 0.008,
+        "log-7-Time": "05:00 06:00"
+      },
+      {
+        "log-8": 0.029,
+        "log-8-Time": "06:00 07:00"
+      },
+      {
+        "log-9": 0.239,
+        "log-9-Time": "07:00 08:00"
+      },
+      {
+        "log-10": 0.027,
+        "log-10-Time": "08:00 09:00"
+      },
+      {
+        "log-11": 0.004,
+        "log-11-Time": "09:00 10:00"
+      },
+      {
+        "log-12": 0.007,
+        "log-12-Time": "10:00 11:00"
+      }
+    ]
+}
+```
+
+Payload Formatter (TTN):
+```js
+function decodeUplink(input) {
+  const bytes = input.bytes;
+
+  // Fixed sizes
+  const startBytesSize = 4; // 4 bytes
+  const logEntriesSize = 12 * 2; // 12 logs, each 2 bytes
+  const meterStatusSize = 2; // 2 bytes
+  const timestampSize = 4; // 4 bytes (clock format)
+  const batteryStatusSize = 1; // 1 byte (last byte)
+
+  const fixedSize = startBytesSize + logEntriesSize + meterStatusSize + timestampSize + batteryStatusSize;
+
+  // Validate byte array length
+  if (bytes.length <= fixedSize) {
+    return { data: {}, warnings: [], errors: ["Invalid byte array length. Expected fixed size."] };
+  }
+
+
+  let hexString = bytes.map((byte) => byte.toString(16).padStart(2, '0')).join('');
+  hexString = hexString.substring(4); // Remove the first 2 bytes
+
+  // Extract Current Reading (first 4 bytes) and convert to integer (Little Endian)
+  const currentReadingHex = hexString.substring(0, 8);
+  const currentReadingLittleEndian =
+    currentReadingHex.substring(6, 8) +
+    currentReadingHex.substring(4, 6) +
+    currentReadingHex.substring(2, 4) +
+    currentReadingHex.substring(0, 2);
+  const currentReading = (parseInt(currentReadingLittleEndian, 16) / 1000).toFixed(3);
+
+  // Extract 12 log entries (convert each to Little Endian signed 16-bit integer)
+  const parameters = [];
+  let index = 8; // Start after currentReading
+  for (let i = 0; i < 12; i++) {
+    const paramHex = hexString.substring(index, index + 4);
+    const littleEndianHex = paramHex.substring(2, 4) + paramHex.substring(0, 2);
+    const paramInt = toSignedInt16(parseInt(littleEndianHex, 16))/1000;
+    parameters.push(paramInt);
+    index += 4;
+  }
+
+  // Extract Meter Status (2 bytes) and parse flags
+  const meterStatusHex = hexString.substring(index, index + 4);
+  const littleEndianMeterStatus =
+    meterStatusHex.substring(2, 4) + meterStatusHex.substring(0, 2);
+  const meterStatus = parseInt(littleEndianMeterStatus, 16);
+
+  const meterStatusFlags = {};
+  const firstByte = parseInt(littleEndianMeterStatus.substring(0, 2), 16);
+  meterStatusFlags.lowBatteryAlarm = Boolean(firstByte & 0b00000001);
+  meterStatusFlags.emptyPipeAlarm = Boolean(firstByte & 0b00000010);
+  meterStatusFlags.reverseFlowAlarm = Boolean(firstByte & 0b00000100);
+  meterStatusFlags.overRangeAlarm = Boolean(firstByte & 0b00001000);
+  meterStatusFlags.overTemperatureAlarm = Boolean(firstByte & 0b00010000);
+  meterStatusFlags.eepromError = Boolean(firstByte & 0b00100000);
+  meterStatusFlags.reserved1 = Boolean(firstByte & 0b01000000);
+  meterStatusFlags.reserved2 = Boolean(firstByte & 0b10000000);
+
+  const secondByte = parseInt(littleEndianMeterStatus.substring(2, 4), 16);
+  meterStatusFlags.leakageAlarm = Boolean(secondByte & 0b00000100);
+  meterStatusFlags.burstAlarm = Boolean(secondByte & 0b00001000);
+  meterStatusFlags.tamperAlarm = Boolean(secondByte & 0b00010000);
+  meterStatusFlags.freezingAlarm = Boolean(secondByte & 0b00100000);
+  meterStatusFlags.reserved3 = Boolean(secondByte & 0b00000001);
+  meterStatusFlags.reserved4 = Boolean(secondByte & 0b00000010);
+  meterStatusFlags.reserved5 = Boolean(secondByte & 0b01000000);
+  meterStatusFlags.reserved6 = Boolean(secondByte & 0b10000000);
+
+  index += 4;
+
+  // Extract Clock Time (4 bytes)
+  const clockHex = hexString.substring(index, index + 8);
+  
+  const hours = parseInt(clockHex.substring(4, 6), 10); // First 2 hex digits represent hours
+  const minutes = parseInt(clockHex.substring(6, 8), 10); // Last 2 hex digits represent minutes
+  const clockTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  
+  const day = parseInt(clockHex.substring(0, 2), 10); // Last 2 hex digits represent minutes
+    
+  const month = parseInt(clockHex.substring(2, 4), 10); // Last 2 hex digits represent minutes
+  const clockDate = `${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}`;
+
+  
+  index += 8;
+  
+  var hrs = hours;
+  
+// Initialize the combined array
+var combined_time_array = [];
+
+// Generate the past 12 entries
+for (let i = 0; i < 12; i++) {
+  // Format the current hour and minute as HH:MM
+  let currentTime = `${hrs.toString().padStart(2, '0')}:00`;
+
+  // Calculate the previous hour
+  let previousHrs = hrs - 1;
+  if (previousHrs < 0) {
+    previousHrs = 23; // Handle rollover to the previous day
+  }
+
+  // Format the previous hour and minute as HH:MM
+  let previousTime = `${previousHrs.toString().padStart(2, '0')}:00`;
+
+  // Combine the two times and add to the array
+  combined_time_array.push(`${previousTime} ${currentTime}`);
+
+  // Decrement the hour
+  hrs -= 1;
+
+  // Handle rollover to the previous day
+  if (hrs < 0) {
+    hrs = 23;
+  }
+}
+
+  // Extract Battery Status (1 byte, last byte of the array) and divide by 2.54
+  const batteryStatusRaw = parseInt(hexString.substring(hexString.length - 2), 16);
+  const batteryStatus = (batteryStatusRaw / 2.54).toFixed(2);
+
+  // Prepare the response
+  return {
+    data: {
+      currentReading: parseFloat(currentReading), // Convert back to number for output
+      parameters: parameters.map((param, i) => ({ [`log-${i + 1}`]: param , [`log-${i + 1}-Time`]: combined_time_array[11-i]})), // Signed 16-bit integers
+      meterStatus: {
+        raw: meterStatus,
+        flags: meterStatusFlags
+      },
+      clockTime, // Time as HH:MM
+      clockDate, // Month/Day 
+      batteryStatus: parseFloat(batteryStatus), // Convert back to number for output
+    },
+    warnings: [],
+    errors: []
+  };
+}
+
+// Helper function to convert int16_t to signed number
+function toSignedInt16(value) {
+  value = value & 0xFFFF; // Ensure 16 bits
+  if (value & 0x8000) { // Check MSB for negative
+    return value - 0x10000; // Convert to signed
+  }
+  return value; // Positive values remain unchanged
+}
+```
 
 
 ## Lambdas for example
@@ -1631,7 +2567,7 @@ Receives messages from the following SQS queue:
 
 Tip: use this site to facilitate the convert from base to hex [base64-to-hex](https://cryptii.com/pipes/base64-to-hex)
 
+
 ### Working on...
 Downlinks
-IQSV (Smart Valve devices)
-IQWM (Water meters devices)
+Alerts
