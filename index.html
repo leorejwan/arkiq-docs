@@ -1149,12 +1149,12 @@ Case 8: Humidity Low.
 <p>(IMPORTANT)
 Case 9: Total Events (cumulative counter): <strong>Toilet Sensor Heartbeat</strong>
 Attributes:
-longEventTriggered: boolean (is it occuring a Long Flush right now? True = yes. False = No)
-alertInterval (no Idea what is it)
-deviceTypeId (no Idea what is it)
-totalEvents: int (How many flushes occured since the last heartbeat)
-totalLiters: decimal (How many litters were spent since the last heartbeat) -&gt; <strong>Convert to Gallons (litters ** 0.264172)</strong>
-totalPulses: decimal (How many pulses were spent since the last heartbeat)</p>
+longEventTriggered: boolean (is it occuring a Long Flush right now? True = yes. False = No)<br />
+alertInterval (no Idea what is it)<br />
+deviceTypeId (no Idea what is it)<br />
+totalEvents: int (How many flushes occured since the last heartbeat)<br />
+totalLiters: decimal (How many litters were spent since the last heartbeat) -&gt; <strong>Convert to Gallons (litters ** 0.264172)</strong><br />
+totalPulses: decimal (How many pulses were spent since the last heartbeat)  </p>
 <p>Payload:</p>
 <p>Bytes:
 0900001661000101000005</p>
@@ -2075,20 +2075,20 @@ var Int16 = function (value) {
 <p><strong>Attributes:</strong>
 BatteryAlarm: bool<br />
 BurstAlarm: bool (when pipe is damaged)<br />
-CumulativeConsumption: decimal (water flow since the moment the device is turned ON) -&gt; * 264.172052 = value in gallons
+CumulativeConsumption: decimal (water flow since the moment the device is turned ON) -&gt; * 264.172052 = value in gallons<br />
 EEPROMERROR: bool (no idea what is it)<br />
 EmptyPipeAlarm: bool (when no flow)<br />
-InstantConsumption: decimal (water flow in this moment PER HOUR) -&gt; * 264.172052 = value in gallons
-LeakageAlarm: bool (when there is a leak in the device/pipe)
-LowBatteryAlarm: bool (when the battery is low)
-OverRangeAlarm: bool (no idea what is it)
-OverTemperatureAlarm: bool (temperature defined in the firmware)
-PreviousDayConsumption: decimal (water flow yesterday)  -&gt; * 264.172052 = value in gallons
-ReverseCumulativeConsumption: decimal (if there is a flow in reverse) -&gt;  * 264.172052 = value in gallons
-ReverseFlowAlarm: bool (when reverse flow)
-ValveStatus: open/close
-WaterPressure: decimal (in MPA) -&gt; * 145.038 to convert to PSI
-WaterTemperature: decimal (in Celsius) -&gt; Need to convert to °F</p>
+InstantConsumption: decimal (water flow in this moment PER HOUR) -&gt; * 264.172052 = value in gallons<br />
+LeakageAlarm: bool (when there is a leak in the device/pipe)<br />
+LowBatteryAlarm: bool (when the battery is low)<br />
+OverRangeAlarm: bool (no idea what is it)<br />
+OverTemperatureAlarm: bool (temperature defined in the firmware)<br />
+PreviousDayConsumption: decimal (water flow yesterday)  -&gt; * 264.172052 = value in gallons<br />
+ReverseCumulativeConsumption: decimal (if there is a flow in reverse) -&gt;  * 264.172052 = value in gallons<br />
+ReverseFlowAlarm: bool (when reverse flow)<br />
+ValveStatus: open/close<br />
+WaterPressure: decimal (in MPA) -&gt; * 145.038 to convert to PSI<br />
+WaterTemperature: decimal (in Celsius) -&gt; Need to convert to °F  </p>
 <p>Payload:</p>
 <p>Bytes:
 FEFE68201335465201740081259090002B612461002B812155002B000000003500000000652300810248091122092520000013161F…</p>
@@ -2648,21 +2648,21 @@ FEFE68201335465201740081259090002B612461002B812155002B00000000350000000065230081
 </ul>
 <p><strong>Attributes:</strong>
 BatteryAlarm: bool<br />
-CumulativeConsumption: decimal (water flow since the moment the device is turned ON) -&gt; * 264.172052 = value in gallons
-EEPROMERROR: bool (no idea what is it)<br />
-EmptyPipeAlarm: bool (when no flow)<br />
-InstantConsumption: decimal (water flow in this moment PER HOUR) -&gt; * 264.172052 = value in gallons
-LeakageAlarm: bool (when there is a leak in the device/pipe)
-LowBatteryAlarm: bool (when the battery is low)
-OverRangeAlarm: bool (no idea what is it)
-OverTemperatureAlarm: bool (temperature defined in the firmware)
-PreviousDayConsumption: decimal (water flow yesterday)  -&gt; * 264.172052 = value in gallons
-ReverseCumulativeConsumption: decimal (if there is a flow in reverse) -&gt;  * 264.172052 = value in gallons
-ReverseFlowAlarm: bool (when reverse flow)
-ValveStatus: open/close/ <strong>half-open (25%, 50% or 75%)</strong>
-WaterPressure: decimal (in MPA) -&gt; * 145.038 to convert to PSI
-WaterTemperature: decimal (in Celsius) -&gt; Need to convert to °F
-<strong>PowerSupply: Battery/External Power Supply</strong></p>
+CumulativeConsumption: decimal (water flow since the moment the device is turned ON) -&gt; * 264.172052 = value in gallons<br />
+EEPROMERROR: bool (no idea what is it)  <br />
+EmptyPipeAlarm: bool (when no flow)  <br />
+InstantConsumption: decimal (water flow in this moment PER HOUR) -&gt; * 264.172052 = value in gallons<br />
+LeakageAlarm: bool (when there is a leak in the device/pipe)<br />
+LowBatteryAlarm: bool (when the battery is low) <br />
+OverRangeAlarm: bool (no idea what is it)<br />
+OverTemperatureAlarm: bool (temperature defined in the firmware)<br />
+PreviousDayConsumption: decimal (water flow yesterday)  -&gt; * 264.172052 = value in gallons<br />
+ReverseCumulativeConsumption: decimal (if there is a flow in reverse) -&gt;  * 264.172052 = value in gallons<br />
+ReverseFlowAlarm: bool (when reverse flow)<br />
+ValveStatus: open/close/ <strong>half-open (25%, 50% or 75%)</strong><br />
+WaterPressure: decimal (in MPA) -&gt; * 145.038 to convert to PSI<br />
+WaterTemperature: decimal (in Celsius) -&gt; Need to convert to °F<br />
+<strong>PowerSupply: Battery/External Power Supply</strong>  </p>
 <p>Payload:</p>
 <p>Bytes:
 FEFE68100000000000000000000000002324000000000200C11615</p>
@@ -2783,25 +2783,25 @@ FEFE68100000000000000000000000002324000000000200C11615</p>
 <p>IQWM devices are installed directly in the pipe and measure the water flow. It sends one uplink every 6 hours and has the history of water consumption in the last 12 hours.<br />
 If one uplink failes, the consumption can be recovered in the next uplink, since the next one will be sent after 6 hours and it contains the last 12 hours of consumption history </p>
 <p><strong>Attributes:</strong>
-batteryStatus: decimal
-clockDate: 09/22 (date - example: Sep 22th)
-clockTime: 11:16 (time - example 11h16m)
-currentReading: decimal (water flow since the moment the device is turned ON) -&gt; * 264.172052 = value in gallons
-burstAlarm: bool (same as IQSV)
-eepromError: bool (same as IQSV)
-emptyPipeAlarm: bool (same as IQSV)
-freezingAlarm: bool (when freezed)
-leakageAlarm: bool (same as IQSV)
-lowBatteryAlarm: bool (same as IQSV)
-overRangeAlarm: bool  (same as IQSV)
-overTemperatureAlarm: bool  (same as IQSV)
-reverseFlowAlarm: bool  (same as IQSV)
-tamperAlarm: bool (when moved) 
-log-1: decimal (* 264.172052 = consumption gallons)
-log-1-Time: "23:00 00:00" (initial and final time reading)
-...
-log-12: decimal,
-log-12-Time: "10:00 11:00" (initial and final time reading)</p>
+batteryStatus: decimal<br />
+clockDate: 09/22 (date - example: Sep 22th)  <br />
+clockTime: 11:16 (time - example 11h16m)  <br />
+currentReading: decimal (water flow since the moment the device is turned ON) -&gt; * 264.172052 = value in gallons  <br />
+burstAlarm: bool (same as IQSV)  <br />
+eepromError: bool (same as IQSV)  <br />
+emptyPipeAlarm: bool (same as IQSV)  <br />
+freezingAlarm: bool (when freezed)  <br />
+leakageAlarm: bool (same as IQSV)<br />
+lowBatteryAlarm: bool (same as IQSV)<br />
+overRangeAlarm: bool  (same as IQSV)<br />
+overTemperatureAlarm: bool  (same as IQSV)<br />
+reverseFlowAlarm: bool  (same as IQSV)<br />
+tamperAlarm: bool (when moved)<br />
+log-1: decimal (* 264.172052 = consumption gallons)<br />
+log-1-Time: "23:00 00:00" (initial and final time reading)<br />
+...<br />
+log-12: decimal,<br />
+log-12-Time: "10:00 11:00" (initial and final time reading)  </p>
 <p>Payload:</p>
 <p>Bytes:
 FEFEBA9003006D000F00080012000600000008001D00EF001B00040007000006092211167BFE</p>
